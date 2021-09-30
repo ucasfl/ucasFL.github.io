@@ -20,23 +20,28 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
-<meta property="og:type" content="website">
-<meta property="og:title" content="Blog">
-<meta property="og:url" content="https://ucasfl.github.io/index.html">
+<meta name="description" content="在数据库中，通常有三类不同的函数：  UDF：用户自定义函数 UDAF：用户自定义聚合函数 UDTF：用户自定义表函数  函数是什么数据库中的函数与编程语言中的函数类似，具有参数和返回值，有的函数也可能没有参数，但都会有返回值。因此，我们能够在 SQL 语句中使用这些函数，并获取它的返回值。比如我们最熟悉的sum、max 和 min 等均为函数，这三个函数实际上都是 UDAF，当我们要计算表中某一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何在ClickHouse钟实现UDF">
+<meta property="og:url" content="https://ucasfl.github.io/2021/03/02/How-to-implement-UDF-in-ClickHouse/index.html">
 <meta property="og:site_name" content="Blog">
+<meta property="og:description" content="在数据库中，通常有三类不同的函数：  UDF：用户自定义函数 UDAF：用户自定义聚合函数 UDTF：用户自定义表函数  函数是什么数据库中的函数与编程语言中的函数类似，具有参数和返回值，有的函数也可能没有参数，但都会有返回值。因此，我们能够在 SQL 语句中使用这些函数，并获取它的返回值。比如我们最熟悉的sum、max 和 min 等均为函数，这三个函数实际上都是 UDAF，当我们要计算表中某一">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-03-02T10:33:13.000Z">
+<meta property="article:modified_time" content="2021-09-30T13:38:52.194Z">
 <meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="UDF">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://ucasfl.github.io/">
+<link rel="canonical" href="https://ucasfl.github.io/2021/03/02/How-to-implement-UDF-in-ClickHouse/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":true,"isPost":false,"lang":"en","comments":"","permalink":"","path":"index.html","title":""}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2021/03/02/How-to-implement-UDF-in-ClickHouse/","path":"2021/03/02/How-to-implement-UDF-in-ClickHouse/","title":"如何在ClickHouse钟实现UDF"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Blog</title>
+<title>如何在ClickHouse钟实现UDF | Blog</title>
   
 
 
@@ -101,7 +106,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -114,6 +119,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">函数是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#UDF"><span class="nav-number">1.1.</span> <span class="nav-text">UDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDAF"><span class="nav-number">1.2.</span> <span class="nav-text">UDAF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDTF"><span class="nav-number">1.3.</span> <span class="nav-text">UDTF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">整体架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#UDF-1"><span class="nav-number">2.1.</span> <span class="nav-text">UDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDAF-1"><span class="nav-number">2.2.</span> <span class="nav-text">UDAF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDTF-1"><span class="nav-number">2.3.</span> <span class="nav-text">UDTF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.</span> <span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#UDF-2"><span class="nav-number">3.1.</span> <span class="nav-text">UDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDAF-2"><span class="nav-number">3.2.</span> <span class="nav-text">UDAF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDTF-2"><span class="nav-number">3.3.</span> <span class="nav-text">UDTF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#strLen"><span class="nav-number">4.1.</span> <span class="nav-text">strLen</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#aggStrLen"><span class="nav-number">4.2.</span> <span class="nav-text">aggStrLen</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#contributors"><span class="nav-number">4.3.</span> <span class="nav-text">contributors</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -178,16 +184,17 @@
 </noscript>
 
 
-    <div class="main-inner index posts-expand">
+    <div class="main-inner post posts-expand">
 
-    
+
+  
 
 
 <div class="post-block">
   
   
 
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
     <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2021/03/02/How-to-implement-UDF-in-ClickHouse/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -200,9 +207,9 @@
       <meta itemprop="name" content="Blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2021/03/02/How-to-implement-UDF-in-ClickHouse/" class="post-title-link" itemprop="url">如何在ClickHouse钟实现UDF</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          如何在ClickHouse钟实现UDF
+        </h1>
 
         <div class="post-meta-container">
           <div class="post-meta">
@@ -234,7 +241,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>在数据库中，通常有三类不同的函数：</p>
+        <p>在数据库中，通常有三类不同的函数：</p>
 <ul>
 <li>UDF：用户自定义函数</li>
 <li>UDAF：用户自定义聚合函数</li>
@@ -386,7 +393,6 @@
 <p>从上面的结果中，我们能够清晰地看出 <code>strLen</code> 和 <code>aggStrLen</code> 的区别了，前者计算每一个名字的长度，返回一个新的列，后者计算所有名字长度的和，最后只返回一个聚合后的值。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>从上文中，我们可以看到，ClickHouse 具有良好的代码结构，易于扩展，这使得我们可以很容易地在其中添加自定义函数，完成各种各样丰富的功能。</p>
 
-      
     </div>
 
     
@@ -394,258 +400,21 @@
     
 
     <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
+          <div class="post-tags">
+              <a href="/tags/UDF/" rel="tag"># UDF</a>
+          </div>
 
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2019/09/28/Cpp-notes/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2019/09/28/Cpp-notes/" class="post-title-link" itemprop="url">C++ 笔记</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2019-09-28 23:03:36" itemprop="dateCreated datePublished" datetime="2019-09-28T23:03:36+08:00">2019-09-28</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/C-C/" itemprop="url" rel="index"><span itemprop="name">C/C++</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;type_traits&gt;</span><br><span class="line"></span><br><span class="line">std::is_same&lt;T, U&gt;  // 判断两个类型是否相同</span><br><span class="line">std::is_same&lt;T, U&gt;::value   // 返回 true 或 false</span><br><span class="line"></span><br><span class="line">std::decay_t&lt;T&gt; // 返回类型信息，去除 const,引用等。</span><br><span class="line">std::decay_t&lt;decltype(obj)&gt;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/09/28/Cpp-notes/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2019/02/22/CPython-Summary/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2019/02/22/CPython-Summary/" class="post-title-link" itemprop="url">CPython 学习笔记</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2019-02-22 11:09:19" itemprop="dateCreated datePublished" datetime="2019-02-22T11:09:19+08:00">2019-02-22</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>本文为查阅相关资料的过程中随手记录的，故内容较为杂乱，无任何章节可言。</p>
-<p>Python 源代码执行流程：</p>
-<p><img src="/photos/py/py.png"></p>
-<p>Python 基于栈式执行，CPython 主要使用三种类型的栈：</p>
-<ul>
-<li>call stack：一个 frame 表示一个活动的函数调用</li>
-<li>data stack：也称作 evaluation stack，每一个函数对应一个 data stack，函数在其中进行数据操纵，包括函数参数，返回地址等</li>
-<li>block stack：用于跟踪控制结构的确定类型：如循环，<code>try/except</code> 块，<code>with</code> 块等</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/02/22/CPython-Summary/#more" rel="contents">
-                Read more &raquo;
-              </a>
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/09/28/Cpp-notes/" rel="prev" title="C++ 笔记">
+                  <i class="fa fa-chevron-left"></i> C++ 笔记
+                </a>
             </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2018/07/08/LLVM-Pass-and-APA-Introduction/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2018/07/08/LLVM-Pass-and-APA-Introduction/" class="post-title-link" itemprop="url">LLVM Pass 与 APA 简介</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2018-07-08 13:54:01" itemprop="dateCreated datePublished" datetime="2018-07-08T13:54:01+08:00">2018-07-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LLVM/" itemprop="url" rel="index"><span itemprop="name">LLVM</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>前段时间学习了一些关于 LLVM Pass 和 APA 方面的知识，趁今天有空，做一些总结。</p>
-<h3 id="LLVM-Pass"><a href="#LLVM-Pass" class="headerlink" title="LLVM Pass"></a>LLVM Pass</h3><p>Pass 是 LLVM 中一个非常重要的框架，在 LLVM 后端的分析、转化、优化等过程中，通常是多个 Pass 一起作用来共同完成的。</p>
-<p>每一个 LLVM Pass 都是 <code>Pass</code> 类的一个派生类，通过重写 <code>Pass</code> 类的虚方法来实现自身的功能。根据你想要实现的功能，你可以选择继承<code>ModulePass</code>或<code>FunctionPass</code> 等等一系列Pass.</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2018/07/08/LLVM-Pass-and-APA-Introduction/#more" rel="contents">
-                Read more &raquo;
-              </a>
+            <div class="post-nav-item">
             </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
+          </div>
     </footer>
   </article>
 </div>
@@ -653,510 +422,7 @@
 
 
 
-    
 
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2018/03/11/Summary-of-Associative-Container-in-C-plus-plus/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2018/03/11/Summary-of-Associative-Container-in-C-plus-plus/" class="post-title-link" itemprop="url">C++中的关联容器</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2018-03-11 14:47:30" itemprop="dateCreated datePublished" datetime="2018-03-11T14:47:30+08:00">2018-03-11</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/C-C/" itemprop="url" rel="index"><span itemprop="name">C/C++</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>关联容器(Associative containers)支持通过键来高效地查找和读取元素。两个基本的关联容器类型是 map, set。</p>
-<p>本文主要是对 C++ 中基本的关联容器 map, set 中的类型和支持的操作进行总结。</p>
-<p>关联容器支持很多顺序容器也提供的相同操作,此外,还提供管理或使用键的特殊操作。</p>
-<h3 id="关联容器类型"><a href="#关联容器类型" class="headerlink" title="关联容器类型"></a>关联容器类型</h3><p><img src="/photos/ac/1.png"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2018/03/11/Summary-of-Associative-Container-in-C-plus-plus/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2018/03/11/Summary-of-Sequential-Container-in-C-plus-plus/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2018/03/11/Summary-of-Sequential-Container-in-C-plus-plus/" class="post-title-link" itemprop="url">C++中三种顺序容器的总结</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2018-03-11 11:51:30" itemprop="dateCreated datePublished" datetime="2018-03-11T11:51:30+08:00">2018-03-11</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/C-C/" itemprop="url" rel="index"><span itemprop="name">C/C++</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>在 C++ 中，标准库提供了三种顺序容器：vector, list, deque，还有三种顺序容器适配器：stack, queue, priority_queue，要使用这些容器，需要在源程序中包含对应的头文件，如 <code>include&lt;vector&gt;</code>。本文主要总结容器的操作。</p>
-<h3 id="容器类型："><a href="#容器类型：" class="headerlink" title="容器类型："></a>容器类型：</h3><ul>
-<li>vector: 支持快速随机访问（顺序存储）</li>
-<li>list  : 支持快速插入、删除（非顺序存储）</li>
-<li>deque : 双端队列</li>
-<li>stack : 后进先出堆栈</li>
-<li>queue : 先进先出队列</li>
-<li>priority_queue : 有优先级管理的队列</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2018/03/11/Summary-of-Sequential-Container-in-C-plus-plus/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/10/06/Seven-things-you-may-not-know-so-far-about-Linux/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/10/06/Seven-things-you-may-not-know-so-far-about-Linux/" class="post-title-link" itemprop="url">关于 Linux 你可能不是非常了解的七件事</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2017-10-06 12:51:31" itemprop="dateCreated datePublished" datetime="2017-10-06T12:51:31+08:00">2017-10-06</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Translation/" itemprop="url" rel="index"><span itemprop="name">Translation</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://i0.wp.com/opensourceforu.com/wp-content/uploads/2015/12/Linux-Kernel-sys-visual5.jpg?resize=750,563" alt="Hidden features of Linux"></p>
-<p>使用 Linux 最酷的事情之一就是随着时间的推移，你可以不断获得新的知识。每天，你都可能会遇到一个新的实用工具，或者只是一个不太熟悉的奇技淫巧，但是却非常有用。这些零碎的东西并不总是能够改变生活，但是却是专业知识的基础。</p>
-<p>即使是专家，也不可能事事皆知。无论你有多少经验，可能总会有更多的东西需要你去学习。所以，在这儿我列出了七件关于 Linux 你可能不知道的事情。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/10/06/Seven-things-you-may-not-know-so-far-about-Linux/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/09/23/Introduction-to-Linux-FileSystem/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/23/Introduction-to-Linux-FileSystem/" class="post-title-link" itemprop="url">Linux 文件系统概览</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2017-09-23 12:48:42" itemprop="dateCreated datePublished" datetime="2017-09-23T12:48:42+08:00">2017-09-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Translation/" itemprop="url" rel="index"><span itemprop="name">Translation</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>本文旨在高屋建瓴地来讨论 Linux 文件系统概念，而不是对某种特定的文件系统，比如 EXT4 是如何工作的进行具体的描述。另外，本文也不是一个文件系统命令的教程。</p>
-<p>每台通用计算机都需要将各种数据存储在硬盘驱动器（HDD）或其他类似设备上，比如 USB 存储器。这样做有两个原因。首先，当计算机关闭以后，内存（RAM）会失去存于它里面的内容。尽管存在非易失类型的 RAM，在计算机断电以后还能把数据存储下来（比如采用 USB 闪存和固态硬盘的闪存），但是，闪存和标准的、易失性的 RAM，比如 DDR3 以及其他相似类型的 RAM 相比，要贵很多。</p>
-<p>数据需要存储在硬盘驱动上的另一个原因是，即使是标准的 RAM 也要比普通硬盘贵得多。尽管 RAM 和硬盘的价格都在迅速下降，但是 RAM 的价格依旧在以字节为单位来计算。让我们进行一个以字节为单位的快速计算：基于 16 GB 大的 RAM 的价格和 2 TB 大的硬盘驱动的价格。计算显示 RAM 的价格大约比硬盘驱动贵 71 倍。今天，一个典型的 RAM 的价格大约是 0.000000004373750 美元/每字节。</p>
-<p>直观的展示一下在很久以前 RAM 的价格，在计算机发展的非常早的时期，其中一种类型的 RAM 是基于在 CRT 屏幕上的点。这种 RAM 非常昂贵，大约 1 美元/每字节。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/23/Introduction-to-Linux-FileSystem/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/09/12/the-Section-of-Variables/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/12/the-Section-of-Variables/" class="post-title-link" itemprop="url">C 语言中变量的段</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2017-09-12 10:16:42" itemprop="dateCreated datePublished" datetime="2017-09-12T10:16:42+08:00">2017-09-12</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/C-C/" itemprop="url" rel="index"><span itemprop="name">C/C++</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在 C 语言中，不同的变量位于不同的段，下面进行简单分析。</p>
-<p>看下面一个简单的 C 程序：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">char</span> *myname=<span class="string">&quot;Bao Yungang&quot;</span>;</span><br><span class="line"><span class="keyword">char</span> gdata[<span class="number">128</span>];</span><br><span class="line"><span class="keyword">char</span> bdata[<span class="number">16</span>] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line">main() &#123;</span><br><span class="line">	<span class="keyword">char</span> * ldata[<span class="number">16</span>];	</span><br><span class="line">	<span class="keyword">char</span> * ddata;</span><br><span class="line"></span><br><span class="line">	ddata = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;myname:%llX\n&quot;</span>, myname);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;main: %llX\n&quot;</span>, main);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;gdata: %llX\nbdata:%llX\nldata:%llx\n&amp;ddata:%llx\nddata: %llx\n&quot;</span>,</span><br><span class="line">		gdata,bdata,ldata,&amp;ddata,ddata);</span><br><span class="line">	<span class="built_in">free</span>(ddata);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>我们分析一下程序中出现的变量所位于的段。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/12/the-Section-of-Variables/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/09/12/Introduction-to-Compiler/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/12/Introduction-to-Compiler/" class="post-title-link" itemprop="url">编译器简介： 在 Siri 前时代如何与计算机对话</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2017-09-12 10:16:15" itemprop="dateCreated datePublished" datetime="2017-09-12T10:16:15+08:00">2017-09-12</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Translation/" itemprop="url" rel="index"><span itemprop="name">Translation</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://pbs.twimg.com/media/C_5qf8aXkAAvSXC.jpg" alt="了解在编译器的世界里前端和后端的新意义"></p>
-<p>简单说来，一个<ruby>编译器<rt>compiler</rt></ruby>不过是一个可以翻译其他程序的程序。传统的编译器可以把源代码翻译成你的计算机能够理解的可执行机器代码。（一些编译器将源代码翻译成别的程序语言，这样的编译器称为源到源翻译器或<ruby>转化器<rt>transpilers</rt></ruby>。）<a target="_blank" rel="noopener" href="http://llvm.org/">LLVM</a> 是一个广泛使用的编译器项目，包含许多模块化的编译工具。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/12/Introduction-to-Compiler/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
-  </nav>
 
 </div>
   </main>
