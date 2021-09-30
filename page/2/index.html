@@ -128,7 +128,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-count">26</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -139,7 +139,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">18</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -179,6 +179,90 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/09/12/the-Section-of-Variables/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2017/09/12/the-Section-of-Variables/" class="post-title-link" itemprop="url">C 语言中变量的段</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-09-12 10:16:42" itemprop="dateCreated datePublished" datetime="2017-09-12T10:16:42+08:00">2017-09-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-C/" itemprop="url" rel="index"><span itemprop="name">C/C++</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在 C 语言中，不同的变量位于不同的段，下面进行简单分析。</p>
+<p>看下面一个简单的 C 程序：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">char</span> *myname=<span class="string">&quot;Bao Yungang&quot;</span>;</span><br><span class="line"><span class="keyword">char</span> gdata[<span class="number">128</span>];</span><br><span class="line"><span class="keyword">char</span> bdata[<span class="number">16</span>] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line">main() &#123;</span><br><span class="line">	<span class="keyword">char</span> * ldata[<span class="number">16</span>];	</span><br><span class="line">	<span class="keyword">char</span> * ddata;</span><br><span class="line"></span><br><span class="line">	ddata = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;myname:%llX\n&quot;</span>, myname);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;main: %llX\n&quot;</span>, main);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;gdata: %llX\nbdata:%llX\nldata:%llx\n&amp;ddata:%llx\nddata: %llx\n&quot;</span>,</span><br><span class="line">		gdata,bdata,ldata,&amp;ddata,ddata);</span><br><span class="line">	<span class="built_in">free</span>(ddata);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们分析一下程序中出现的变量所位于的段。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/12/the-Section-of-Variables/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -928,87 +1012,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2017/05/23/8-Excellent-Open-Source-Markdown-Editor/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/03/18/Free-Command-in-Linux/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/03/18/Free-Command-in-Linux/" class="post-title-link" itemprop="url">free：一个在 Linux 中检查内存使用情况的标准命令</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2017-03-18 10:15:31" itemprop="dateCreated datePublished" datetime="2017-03-18T10:15:31+08:00">2017-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Translation/" itemprop="url" rel="index"><span itemprop="name">Translation</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>我们都知道， IT 基础设施方面的大多数服务器（包括世界顶级的超级计算机）都运行在 Linux 平台上，因为和其他操作系统相比， Linux 更加灵活。有的操作系统对于一些微乎其微的改动和补丁更新都需要重启，但是 Linux 不需要，只有对于一些关键补丁的更新， Linux 才会需要重启。</p>
-<p>Linux 系统管理员面临的一大挑战是如何在没有任何停机时间的情况下维护系统的良好运行。管理内存使用是 Linux 管理员又一个具有挑战性的任务。<code>free</code> 是 Linux 中一个标准的并且被广泛使用的命令，它被用来分析内存统计（空闲和已用）。今天，我们将要讨论 <code>free</code> 命令以及它的一些有用选项。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/03/18/Free-Command-in-Linux/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
