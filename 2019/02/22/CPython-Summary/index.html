@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="本文为查阅相关资料的过程中随手记录的，故内容较为杂乱，无任何章节可言。 Python 源代码执行流程：  Python 基于栈式执行，CPython 主要使用三种类型的栈：  call stack：一个 frame 表示一个活动的函数调用 data stack：也称作 evaluation stack，每一个函数对应一个 data stack，函数在其中进行数据操纵，包括函数参数，返回地址等 bl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPython 学习笔记">
+<meta property="og:url" content="https://ucasfl.github.io/2019/02/22/CPython-Summary/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="本文为查阅相关资料的过程中随手记录的，故内容较为杂乱，无任何章节可言。 Python 源代码执行流程：  Python 基于栈式执行，CPython 主要使用三种类型的栈：  call stack：一个 frame 表示一个活动的函数调用 data stack：也称作 evaluation stack，每一个函数对应一个 data stack，函数在其中进行数据操纵，包括函数参数，返回地址等 bl">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ucasfl.github.io/photos/py/py.png">
+<meta property="og:image" content="https://ucasfl.github.io/photos/py/ic.png">
+<meta property="og:image" content="https://ucasfl.github.io/photos/py/state.png">
+<meta property="article:published_time" content="2019-02-22T03:09:19.000Z">
+<meta property="article:modified_time" content="2021-09-30T08:29:04.107Z">
+<meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="CPython">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ucasfl.github.io/photos/py/py.png">
+
+
+<link rel="canonical" href="https://ucasfl.github.io/2019/02/22/CPython-Summary/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2019/02/22/CPython-Summary/","path":"2019/02/22/CPython-Summary/","title":"CPython 学习笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CPython 学习笔记 | Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Python-%E4%BB%A3%E7%A0%81%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">Python 代码编译过程：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Python-Objects"><span class="nav-number">2.</span> <span class="nav-text">Python Objects</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code-Objects"><span class="nav-number">3.</span> <span class="nav-text">Code Objects</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Frames-Objects"><span class="nav-number">4.</span> <span class="nav-text">Frames Objects</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8%E7%8A%B6%E6%80%81%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81"><span class="nav-number">5.</span> <span class="nav-text">解释器状态和线程状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#The-evaluation-loop-ceval-c"><span class="nav-number">6.</span> <span class="nav-text">The evaluation loop, ceval.c</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Block-Stack"><span class="nav-number">7.</span> <span class="nav-text">Block Stack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E-Class-code-%E5%88%B0%E5%AD%97%E8%8A%82%E7%A0%81"><span class="nav-number">8.</span> <span class="nav-text">从 Class code 到字节码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generator"><span class="nav-number">9.</span> <span class="nav-text">Generator</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#References"><span class="nav-number">10.</span> <span class="nav-text">References</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="ucasfl"
+      src="/photos/ppp.jpg">
+  <p class="site-author-name" itemprop="name">ucasfl</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2019/02/22/CPython-Summary/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CPython 学习笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-02-22 11:09:19" itemprop="dateCreated datePublished" datetime="2019-02-22T11:09:19+08:00">2019-02-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文为查阅相关资料的过程中随手记录的，故内容较为杂乱，无任何章节可言。</p>
+<p>Python 源代码执行流程：</p>
+<p><img src="/photos/py/py.png"></p>
+<p>Python 基于栈式执行，CPython 主要使用三种类型的栈：</p>
+<ul>
+<li>call stack：一个 frame 表示一个活动的函数调用</li>
+<li>data stack：也称作 evaluation stack，每一个函数对应一个 data stack，函数在其中进行数据操纵，包括函数参数，返回地址等</li>
+<li>block stack：用于跟踪控制结构的确定类型：如循环，<code>try/except</code> 块，<code>with</code> 块等</li>
+</ul>
+<span id="more"></span>
+
+<p>反汇编Python字节码：<code>dis</code> 库，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">import dis</span><br><span class="line"></span><br><span class="line">def hello():</span><br><span class="line">	print(&#x27;hello, world!&#x27;)</span><br><span class="line"></span><br><span class="line">dis.dis(hello)</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">2           0 LOAD_GLOBAL              0 (print)</span><br><span class="line">            2 LOAD_CONST               1 (&#x27;hello&#x27;)</span><br><span class="line">            4 CALL_FUNCTION            1</span><br><span class="line">            6 POP_TOP</span><br><span class="line">            8 LOAD_CONST               0 (None)</span><br><span class="line">           10 RETURN_VALUE</span><br></pre></td></tr></table></figure>
+
+<p>可通过 <code>__code__</code> 属性访问函数 code object，如 <code>hello.__code__</code>，同时，code 对象拥有如下一些属性：</p>
+<ul>
+<li><code>co_consts</code>：由函数中出现的任何<strong>文字</strong>(如常数、字符串)组成的元组</li>
+<li><code>co_varnames</code>：一个包含所有函数体中使用到的局部变量的名字的元组</li>
+<li><code>co_names</code>：一个包含任何函数中引用过的非局部名字的元组，包括变量名，调用的函数名等</li>
+<li><code>co_code</code>：原始字节码</li>
+</ul>
+<p>Python 解释器是一个字节码解释器，模拟真实计算机的软件。</p>
+<p>解释器在执行字节码时操作的是数据栈。</p>
+<p>Frame：一个 frame 是一些信息的集合和代码的上下文。frame 在 Python 代码执行时动态地创建和销毁，每个 frame 对应函数的一次调用，所以每个 frame 只有一个 code object 与之关联，相反，一个 code object 可以有多个 frame，如递归函数。总的来说，Python 程序的每个作用域有一个 frame，比如每个模块，每个函数调用，每个类定义。</p>
+<p>每个 frame 都有自己特定的 data stack 和 block stack 。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; def bar(y):</span><br><span class="line">...     z = y + 3     # &lt;--- (3) ... and the interpreter is here.</span><br><span class="line">...     return z</span><br><span class="line">...</span><br><span class="line">&gt;&gt;&gt; def foo():</span><br><span class="line">...     a = 1</span><br><span class="line">...     b = 2</span><br><span class="line">...     return a + bar(b) # &lt;--- (2) ... which is returning a call to bar ...</span><br><span class="line">...</span><br><span class="line">&gt;&gt;&gt; foo()             # &lt;--- (1) We&#x27;re in the middle of a call to foo ...</span><br><span class="line">3</span><br></pre></td></tr></table></figure>
+
+<p>假设此时，解释器正在 <code>foo</code> 函数的调用中，紧接着调用 <code>bar</code> ，则 call stack，data stack，block stack 的示意图如下：</p>
+<p><img src="/photos/py/ic.png"></p>
+<p>现在，解释器在 <code>bar</code> 函数的调用中，call stack 中有三个 frame，一旦 <code>bar</code> 返回，与之对应的 frame 就会被弹出并丢弃。</p>
+<p>字节码指令<code>RETURN_VALUE</code>告诉解释器在 frame 间传递一个值。首先，它把位于调用栈栈顶的 frame 中的 data stack 的栈顶值弹出。然后把整个 frame 弹出丢弃，最后把这个值压到下一个 frame 的 data stack 中。</p>
+<h3 id="Python-代码编译过程："><a href="#Python-代码编译过程：" class="headerlink" title="Python 代码编译过程："></a>Python 代码编译过程：</h3><ul>
+<li>解析源代码生成解析树(parse tree)</li>
+<li>将解析树转换成抽象语法树 AST</li>
+<li>生成符号表</li>
+<li>根据 AST 生成 code object：AST -&gt; 控制流图 -&gt; code object</li>
+</ul>
+<p>使用 <code>parser</code> 模块可以获得 Python 代码的 parse tree：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt;code_str = &quot;&quot;&quot;def hello_world():</span><br><span class="line">                     return &#x27;hello world&#x27;</span><br><span class="line">              &quot;&quot;&quot;</span><br><span class="line">&gt;&gt;&gt; import parser</span><br><span class="line">&gt;&gt;&gt; from pprint import pprint</span><br><span class="line">&gt;&gt;&gt; st = parser.suite(code_str)</span><br><span class="line">&gt;&gt;&gt; pprint(parser.st2list(st))</span><br><span class="line">[257,</span><br><span class="line">[269,</span><br><span class="line">[294,</span><br><span class="line">[263,</span><br><span class="line">    [1, &#x27;def&#x27;],</span><br><span class="line">    [1, &#x27;hello_world&#x27;],</span><br><span class="line">    [264, [7, &#x27;(&#x27;], [8, &#x27;)&#x27;]],</span><br><span class="line">    [11, &#x27;:&#x27;],</span><br><span class="line">    [303,</span><br><span class="line">    [4, &#x27;&#x27;],</span><br><span class="line">    [5, &#x27;&#x27;],</span><br><span class="line">    [269,</span><br><span class="line">    [270,</span><br><span class="line">    [271,</span><br><span class="line">        [277,</span><br><span class="line">        [280,</span><br><span class="line">        [1, &#x27;return&#x27;],</span><br><span class="line">        [330,</span><br><span class="line">        [304,</span><br><span class="line">            [308,</span><br><span class="line">            [309,</span><br><span class="line">            [310,</span><br><span class="line">            [311,</span><br><span class="line">                [314,</span><br><span class="line">                [315,</span><br><span class="line">                [316,</span><br><span class="line">                [317,</span><br><span class="line">                    [318,</span><br><span class="line">                    [319,</span><br><span class="line">                    [320,</span><br><span class="line">                    [321,</span><br><span class="line">                        [322, [323, [3, &#x27;&quot;hello world&quot;&#x27;]]]]]]]]]]]]]]]]]]]],</span><br><span class="line">    [4, &#x27;&#x27;]]],</span><br><span class="line">    [6, &#x27;&#x27;]]]]],</span><br><span class="line">[4, &#x27;&#x27;],</span><br><span class="line">[0, &#x27;&#x27;]]</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>ast</code> 模块来获取 Python 代码的 AST：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt;code_str = &quot;&quot;&quot;def hello_world():</span><br><span class="line">                     return &#x27;hello world&#x27;</span><br><span class="line">              &quot;&quot;&quot;</span><br><span class="line">&gt;&gt;&gt; import ast</span><br><span class="line">&gt;&gt;&gt; import pprint</span><br><span class="line">&gt;&gt;&gt; node = ast.parse(code_str, mode=&quot;exec&quot;)</span><br><span class="line">&gt;&gt;&gt; ast.dump(node)</span><br><span class="line">(&quot;Module(body=[FunctionDef(name=&#x27;hello_world&#x27;, args=arguments(args=[], &quot;</span><br><span class="line">&#x27;vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]), &#x27;</span><br><span class="line">&quot;body=[Return(value=Str(s=&#x27;hello world&#x27;))], decorator_list=[], &quot;</span><br><span class="line">&#x27;returns=None)])&#x27;)</span><br></pre></td></tr></table></figure>
+
+<p>Names and binding in Python：在 Python 中，对象通过名字引用，binding 即名字与对象的绑定，名字仅仅是与对象相联系的符号，是对象的引用，没有类型，对象具有类型。</p>
+<p>Code Blocks: A code block is a piece of program code that is executed as a single unit in python. Modules, functions and classes are all examples of code blocks. Commands typed in interactively at the REPL, script commands run with the -c option are also code blocks.</p>
+<p>Namespaces：在 Python 中，名字空间通过字典映射实现，包含所有内建函数的内建名字空间可通过 <code>__builtins__.__dict__</code> 访问。</p>
+<h3 id="Python-Objects"><a href="#Python-Objects" class="headerlink" title="Python Objects"></a>Python Objects</h3><p>Python 中的所有对象，函数、变量等，都是 <code>PyObject</code> ，或者说 <code>PyObject</code> 是所有 Python 对象的超类。</p>
+<p><code>PyObject</code> 定义：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef struct _object &#123;</span><br><span class="line">    _PyObject_HEAD_EXTRA</span><br><span class="line">    Py_ssize_t ob_refcnt;</span><br><span class="line">    struct _typeobject *ob_type;</span><br><span class="line">&#125; PyObject;</span><br></pre></td></tr></table></figure>
+<p><code>_PyObject_HEAD_EXTRA</code> 是一个宏，<code>ob_refcnt</code> 用于内存管理，表明该对象的引用次数，<code>ob_type</code> 是指向 type object 的指针。一个有趣的事,<code>type</code> 函数的 type 就是 <code>type</code>，因此，<code>type</code> 函数的 <code>ob_type</code> 域指向自身。</p>
+<ul>
+<li><code>type</code> 类型是所有内建类型的元类型</li>
+<li><code>object</code> 类型是所有用户自定义类型的元类型</li>
+</ul>
+<h3 id="Code-Objects"><a href="#Code-Objects" class="headerlink" title="Code Objects"></a>Code Objects</h3><p>Code Objects 是已编译可执行 Python 代码，其中包含可运行的字节码指令。</p>
+<p>给定一个函数，我们可以通过 <code>__code__</code> 属性访问函数体的 code object：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; def hello():</span><br><span class="line">...     print(&quot;hello, world!&quot;)</span><br><span class="line">...</span><br><span class="line">&gt;&gt;&gt; hello.__code__</span><br><span class="line">&lt;code object hello at 0x7fd58d3b4ed0, file &quot;&lt;stdin&gt;&quot;, line 1&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Code Object 的 <code>co_code</code> 属性包含字节码指令序列：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; hello.__code__.co_code</span><br><span class="line">b&#x27;t\x00d\x01\x83\x01\x01\x00d\x00S\x00&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>字节码指令的大小为两字节，一字节为 opcode(现为两字节大小)，另一字节为 opcode 的参数。如果 opcode 不需要参数，则对应参数部分为 0。</p>
+<h3 id="Frames-Objects"><a href="#Frames-Objects" class="headerlink" title="Frames Objects"></a>Frames Objects</h3><p>Frame object 为 code object 的执行提供上下文信息。</p>
+<p>通过 <code>sys._getframe()</code> 访问 frame object：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; import sys</span><br><span class="line">&gt;&gt;&gt; f = sys._getframe()</span><br><span class="line">&gt;&gt;&gt; f</span><br><span class="line">&lt;frame object at 0x7fd580fd0b28&gt;</span><br><span class="line">&gt;&gt;&gt; dir(f)</span><br><span class="line">[&#x27;__class__&#x27;, &#x27;__delattr__&#x27;, &#x27;__dir__&#x27;, &#x27;__doc__&#x27;, &#x27;__eq__&#x27;, &#x27;__format__&#x27;, &#x27;__ge__&#x27;, &#x27;__getattribute__&#x27;, &#x27;__gt__&#x27;, &#x27;__hash__&#x27;, &#x27;__init__&#x27;, &#x27;__init_subclass__&#x27;, &#x27;__le__&#x27;, &#x27;__lt__&#x27;, &#x27;__ne__&#x27;, &#x27;__new__&#x27;, &#x27;__reduce__&#x27;, &#x27;__reduce_ex__&#x27;, &#x27;__repr__&#x27;, &#x27;__setattr__&#x27;, &#x27;__sizeof__&#x27;, &#x27;__str__&#x27;, &#x27;__subclasshook__&#x27;, &#x27;clear&#x27;, &#x27;f_back&#x27;, &#x27;f_builtins&#x27;, &#x27;f_code&#x27;, &#x27;f_globals&#x27;, &#x27;f_lasti&#x27;, &#x27;f_lineno&#x27;, &#x27;f_locals&#x27;, &#x27;f_trace&#x27;]</span><br></pre></td></tr></table></figure>
+
+<p>在一个 code object 执行前，都需要创建一个 frame object，该 frame object 包含该 code object 执行需要的所有名字空间，一个指向当前执行的线程的引用，data stack，block stack，以及其它 code object 执行需要的重要信息。</p>
+<p>在 Python 代码执行过程中，需要通过调用 <code>PyFrame_New</code> 函数创建很多次 frame object，为了减少函数调用带来的开销，采用了两种优化方式：</p>
+<ul>
+<li>Code object 有一个域 <code>co_zombieframe</code> ，当一个 object 执行过后，对应的 frame 不会立刻释放，而会保存到 <code>co_zombieframe</code> 中，从而当下次执行相同的 code object 时，不需要再次分配内存创建新的 frame；</li>
+<li>Python 虚拟机维护一个预分配好的空闲 frame 列表，供 code object 使用； </li>
+</ul>
+<h3 id="解释器状态和线程状态"><a href="#解释器状态和线程状态" class="headerlink" title="解释器状态和线程状态"></a>解释器状态和线程状态</h3><p>Interpreter state 保存一个 Python 进程中一系列协作线程共享的全局状态。</p>
+<p>一个 thread state 与一个正在运行的 Python 进程的 native OS thread 相联系。</p>
+<p>解释器状态、线程状态和 frame 之间的关系：</p>
+<p><img src="/photos/py/state.png"></p>
+<h3 id="The-evaluation-loop-ceval-c"><a href="#The-evaluation-loop-ceval-c" class="headerlink" title="The evaluation loop, ceval.c"></a>The evaluation loop, ceval.c</h3><p>Python 虚拟机循环迭代 code object 的每一条指令并执行：<code>Python/ceval.c</code>，关键函数：<code>PyEval_EvalFrameEx</code>。</p>
+<p>在 <code>PyEval_EvalFrameEx</code> 函数执行 Python 字节码之前，需要进行大量的设置工作，包括错误检查、frame 创建和初始化等(<code>_PyEval_EvalCodeWithName</code> 函数)。</p>
+<h3 id="Block-Stack"><a href="#Block-Stack" class="headerlink" title="Block Stack"></a>Block Stack</h3><p>通过 block stack，能够很方便地实现异常处理，且仅用于处理循环和异常。<code>PyFrame_BlockSetup</code> 函数创建一个一个新的 block 并 push 到 block stack。</p>
+<h3 id="从-Class-code-到字节码"><a href="#从-Class-code-到字节码" class="headerlink" title="从 Class code 到字节码"></a>从 Class code 到字节码</h3><p>创建类的过程大致如下：</p>
+<ul>
+<li>将类定义语句放入一个 code object 中</li>
+<li>确定该类实例的合适元类</li>
+<li>为该类的名字空间准备一个字典</li>
+<li>在该名字空间内执行上述对应的 code object</li>
+<li>通过实例化元类创建类对象</li>
+</ul>
+<p>元类确定：</p>
+<ul>
+<li>如果没有给定基类或明确的元类，则使用 <code>type()</code></li>
+<li>如果给定了明确的元类但不是 <code>type()</code> 的实例，则使用该元类</li>
+<li>如果给定了 <code>type()</code> 的实例作为明确元类，或者定义了基类，则使用最派生的元类。</li>
+</ul>
+<h3 id="Generator"><a href="#Generator" class="headerlink" title="Generator"></a>Generator</h3><p>生成器对象包含一个 frame object 和 code object，当生成器函数被调用时，它并不会运行，而是返回一个生成器对象，只有将生成器对象作为一个参数传入内建的 <code>next</code> 函数时，生成器对象才能够运行：即在生成器对象所包含的 frame object 内调用 <code>PyEval_EvalFrameEx</code> 函数。</p>
+<p>当生成器函数执行遇到 <code>YIELD_VALUE</code> opcode 时，该 opcode 会使得执行暂停，并将栈顶值返回给调用者。暂停意味着当前正在执行的 frame 退出了，但是它并不会被释放，因为该 frame 还在被生成器对象引用，并且能够再次执行，即再次以该 frame 作为参数调用 <code>PyEval_EvalFrameEx</code> 函数时。</p>
+<h3 id="References"><a href="#References" class="headerlink" title="References"></a>References</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://leanpub.com/insidethepythonvirtualmachine/read">Inside the Python virtual machine</a></li>
+<li><a target="_blank" rel="noopener" href="https://opensource.com/article/18/4/introduction-python-bytecode">An introduction to Python bytecode</a></li>
+<li><a target="_blank" rel="noopener" href="http://aosabook.org/en/500L/a-python-interpreter-written-in-python.html">A Python Interpreter Written in Python</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CPython/" rel="tag"># CPython</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2018/07/08/LLVM-Pass-and-APA-Introduction/" rel="prev" title="LLVM Pass 与 APA 简介">
+                  <i class="fa fa-chevron-left"></i> LLVM Pass 与 APA 简介
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/09/28/Cpp-notes/" rel="next" title="C++ 笔记">
+                  C++ 笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ucasfl</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

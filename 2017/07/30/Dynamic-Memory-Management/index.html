@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="存储空间的分配和管理 问题的来源: ( 数据 ) 结构中的每一个数据元素都对应一定的存储空间,数据元素的访问都是通过对应的存储单元来进行的 – 操作系统、编译程序 ( 例如 JVM) 、用户程序 问题的解决策略:采用动态存储管理思想 存储空间的分配和管理策略的选择与用户的需求有关: 用户存储请求的分配量的大小分布 用户存储分配请求和释放请求的频率 分配效率 对系统的重要性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态存储管理">
+<meta property="og:url" content="https://ucasfl.github.io/2017/07/30/Dynamic-Memory-Management/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="存储空间的分配和管理 问题的来源: ( 数据 ) 结构中的每一个数据元素都对应一定的存储空间,数据元素的访问都是通过对应的存储单元来进行的 – 操作系统、编译程序 ( 例如 JVM) 、用户程序 问题的解决策略:采用动态存储管理思想 存储空间的分配和管理策略的选择与用户的需求有关: 用户存储请求的分配量的大小分布 用户存储分配请求和释放请求的频率 分配效率 对系统的重要性">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-07-30T11:57:40.000Z">
+<meta property="article:modified_time" content="2021-09-30T08:29:04.107Z">
+<meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="Memory-Management">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://ucasfl.github.io/2017/07/30/Dynamic-Memory-Management/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2017/07/30/Dynamic-Memory-Management/","path":"2017/07/30/Dynamic-Memory-Management/","title":"动态存储管理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>动态存储管理 | Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E7%A9%BA%E9%97%B4%E7%9A%84%E5%88%86%E9%85%8D%E5%92%8C%E7%AE%A1%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">存储空间的分配和管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%AD%98%E5%82%A8%E7%AE%A1%E7%90%86-%E5%A0%86%E7%9A%84%E7%AE%A1%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">动态存储管理 - 堆的管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">内存分配方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%88%A9%E7%94%A8%E7%A9%BA%E9%97%B4%E8%A1%A8"><span class="nav-number">4.</span> <span class="nav-text">可利用空间表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E5%BC%8F%E5%8F%AF%E5%88%A9%E7%94%A8%E7%A9%BA%E9%97%B4%E8%A1%A8%E7%9A%84%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">5.</span> <span class="nav-text">链式可利用空间表的分配方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F1%EF%BC%9A%E7%A9%BA%E9%97%B2%E5%9D%97%E7%9A%84%E5%A4%A7%E5%B0%8F%E7%9B%B8%E5%90%8C"><span class="nav-number">5.1.</span> <span class="nav-text">分配方式1：空闲块的大小相同</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F2%EF%BC%9A%E7%A9%BA%E9%97%B2%E5%9D%97%E5%A4%A7%E5%B0%8F%E5%8F%AA%E6%9C%89%E5%87%A0%E7%A7%8D%E8%A7%84%E6%A0%BC"><span class="nav-number">5.2.</span> <span class="nav-text">分配方式2：空闲块大小只有几种规格</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F3%EF%BC%9A%E8%AF%B7%E6%B1%82%E5%88%86%E9%85%8D%E7%9A%84%E5%9D%97%E5%A4%A7%E5%B0%8F%E4%B8%8D%E7%A1%AE%E5%AE%9A"><span class="nav-number">5.3.</span> <span class="nav-text">分配方式3：请求分配的块大小不确定</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A6%96%E6%AC%A1%E6%8B%9F%E5%90%88%E6%B3%95-First-fit"><span class="nav-number">6.</span> <span class="nav-text">首次拟合法 (First fit)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E6%8B%9F%E5%90%88%E6%B3%95-Best-fit"><span class="nav-number">7.</span> <span class="nav-text">最佳拟合法 (Best fit)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E5%B7%AE%E6%8B%9F%E5%90%88%E6%B3%95-Worst-fit"><span class="nav-number">8.</span> <span class="nav-text">最差拟合法 (Worst fit)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%B9%E7%95%8C%E6%A0%87%E8%AF%86%E6%B3%95-Boundary-Tag-Method"><span class="nav-number">9.</span> <span class="nav-text">边界标识法 (Boundary Tag Method)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E7%AE%97%E6%B3%95%EF%BC%9A%E4%B8%A4%E4%B8%AA%E7%BA%A6%E5%AE%9A"><span class="nav-number">10.</span> <span class="nav-text">分配算法：两个约定</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E7%BA%A6%E5%AE%9A"><span class="nav-number">10.1.</span> <span class="nav-text">分配约定</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E6%89%BE%E7%BA%A6%E5%AE%9A"><span class="nav-number">10.2.</span> <span class="nav-text">查找约定</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E7%AE%97%E6%B3%95%EF%BC%9A%E9%A6%96%E6%AC%A1%E6%8B%9F%E5%90%88%E6%B3%95"><span class="nav-number">11.</span> <span class="nav-text">分配算法：首次拟合法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9E%E6%94%B6%E7%AE%97%E6%B3%95"><span class="nav-number">12.</span> <span class="nav-text">回收算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%83%85%E5%86%B51"><span class="nav-number">12.1.</span> <span class="nav-text">情况1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%83%85%E5%86%B52%E3%80%813"><span class="nav-number">12.2.</span> <span class="nav-text">情况2、3</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%83%85%E5%86%B54"><span class="nav-number">12.3.</span> <span class="nav-text">情况4</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F-Buddy-System"><span class="nav-number">13.</span> <span class="nav-text">伙伴系统 (Buddy System)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%88%86%E9%85%8D%E7%AE%97%E6%B3%95"><span class="nav-number">13.1.</span> <span class="nav-text">伙伴系统的分配算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9E%E6%94%B6%E7%AE%97%E6%B3%95-1"><span class="nav-number">13.2.</span> <span class="nav-text">回收算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A0%E7%94%A8%E5%8D%95%E5%85%83%E6%94%B6%E9%9B%86"><span class="nav-number">14.</span> <span class="nav-text">无用单元收集</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="ucasfl"
+      src="/photos/ppp.jpg">
+  <p class="site-author-name" itemprop="name">ucasfl</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/07/30/Dynamic-Memory-Management/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          动态存储管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-07-30 19:57:40" itemprop="dateCreated datePublished" datetime="2017-07-30T19:57:40+08:00">2017-07-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/DataStructures/" itemprop="url" rel="index"><span itemprop="name">DataStructures</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h3 id="存储空间的分配和管理"><a href="#存储空间的分配和管理" class="headerlink" title="存储空间的分配和管理"></a>存储空间的分配和管理</h3><ul>
+<li>问题的来源: ( 数据 ) 结构中的每一个数据元素都对应一定的存储空间,数据元素的访问都是通过对应的存储单元来进行的 – 操作系统、编译程序 ( 例如 JVM) 、用户程序</li>
+<li>问题的解决策略:采用动态存储管理思想</li>
+<li>存储空间的分配和管理策略的选择与用户的需求有关:<ul>
+<li>用户存储请求的分配量的大小分布</li>
+<li>用户存储分配请求和释放请求的频率</li>
+<li>分配效率 对系统的重要性</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+
+<h3 id="动态存储管理-堆的管理"><a href="#动态存储管理-堆的管理" class="headerlink" title="动态存储管理 - 堆的管理"></a>动态存储管理 - 堆的管理</h3><ul>
+<li>堆(heap)：操作系统在内存中划出一块地址连续的大区域<ul>
+<li>占用块:已分配给用户使用的一块地址连续的内存区域;</li>
+<li>空闲块:未曾分配的地址连续的内存区域</li>
+</ul>
+</li>
+<li>堆的管理要解决的问题:如何根据用户的存储 / 内存分配请求分配内存空间?如何回收被释放的或不再使用的 ) 内存空间?</li>
+<li>堆的使用:利用程序设计语言提供的内存动态分配函数<br>– C : malloc() , calloc() , realloc , free() 函数<br>– C++ : new , delete 函数等</li>
+</ul>
+<h3 id="内存分配方式"><a href="#内存分配方式" class="headerlink" title="内存分配方式"></a>内存分配方式</h3><p>方式1： 从高地址空闲块中进行分配,直到分配无法进行时,才回收所有用户不再使用的空闲块,重新组织一个大的空闲块来再分配。</p>
+<p>方式2：用户程序一旦运行结束,便将它所占的内存区释放成为空闲块,同时,每当新用户请求分配内存时,需查找整个内存区中所有空闲块,并从中找出一个合适的空闲块分配之。</p>
+<h3 id="可利用空间表"><a href="#可利用空间表" class="headerlink" title="可利用空间表"></a>可利用空间表</h3><ul>
+<li><p>可利用空间表 / 存储池:包含所有可分配的空闲块</p>
+</li>
+<li><p>– 当用户请求分配时,系统从可利用空间表中删除一个结点分配之</p>
+</li>
+<li><p>– 当用户释放其所占内存时,系统即回收并将它插入到可利用空间表中</p>
+</li>
+<li><p>可利用空间表的组织方式</p>
+</li>
+<li><pre><code>  – 目录表
+</code></pre>
+</li>
+<li><pre><code>  – 链表方式
+</code></pre>
+</li>
+</ul>
+<h3 id="链式可利用空间表的分配方式"><a href="#链式可利用空间表的分配方式" class="headerlink" title="链式可利用空间表的分配方式"></a>链式可利用空间表的分配方式</h3><ul>
+<li>当可利用空间表以链表方式组织时,每个空闲块就是链表中的一个结点<br>– 分配时:从链表中找到一个合适的结点加以分配,然后将该结点删除之;<br>– 回收时:将空闲块插入到链表中。</li>
+<li>具体的分配和释放的策略取决于结点 ( 空闲块 ) 的结构<br>– 空闲块的大小相同<br>– 空闲块的大小只有几种规格<br>– 空闲块的大小不固定</li>
+</ul>
+<h4 id="分配方式1：空闲块的大小相同"><a href="#分配方式1：空闲块的大小相同" class="headerlink" title="分配方式1：空闲块的大小相同"></a>分配方式1：空闲块的大小相同</h4><p>– 将进行动态存储分配的整个内存区域( 堆 ) 按所需大小分割成若干大小相同的块,然后用指针链接成一个可利用空间表。<br>– 分配时:从表的首结点分配,然后删除该结点<br>– 回收时:将释放的空闲块插入表头<br>– 存在的问题:空间利用率不高<br>当请求分配的块空间大小比最大规格的结点还大时,分配不能进行。而实际上内存空间却可能存在比所需大小还要大的的连续空间。</p>
+<h4 id="分配方式2：空闲块大小只有几种规格"><a href="#分配方式2：空闲块大小只有几种规格" class="headerlink" title="分配方式2：空闲块大小只有几种规格"></a>分配方式2：空闲块大小只有几种规格</h4><p>– 根据统计分析得到的概率分布,事先对动态分配的堆建立若干个可利用空间链表,同一链表中的结点 ( 块 ) 大小都相同。<br>– 分配时:根据请求的大小,将最接近该大小的某个链表的首结点分配给用户。若剩余部分正好是另一种规格大小,则将剩余部分插入到另一种规格的链表中,然后删除该结点<br>– 回收时:只要将所释放的空闲块插入到相应大小的表头<br>– 存在的问题:同前</p>
+<h4 id="分配方式3：请求分配的块大小不确定"><a href="#分配方式3：请求分配的块大小不确定" class="headerlink" title="分配方式3：请求分配的块大小不确定"></a>分配方式3：请求分配的块大小不确定</h4><p>– 整个堆空间开始是一个空闲块,链表中只有一个大小为整个堆的结点,随着分配和回收的进行,链表中的结点大小和个数动态变化<br>– 链表结点中,增加一个表示结点大小的域 (size),以保存空闲块的大小<br>– 分配策略:若用户请求分配大小为 n(kB) 的内存,而链表中有若干大小不小于 n 的空闲块时,如何分配 ?</p>
+<ul>
+<li>首次拟合法 (First fit)</li>
+<li>最佳拟合法 (Best fit)</li>
+<li>最差拟合法 (Worst fit)</li>
+</ul>
+<h3 id="首次拟合法-First-fit"><a href="#首次拟合法-First-fit" class="headerlink" title="首次拟合法 (First fit)"></a>首次拟合法 (First fit)</h3><ul>
+<li>分配时:从表头指针开始查找可利用空间表,将找到的第一个不小于 n 的空闲块的部分 ( 所需要大小 ) 分配给用户,剩下部分仍然是一个空闲块结点</li>
+<li>回收时:将释放的空闲块插在链表的表头</li>
+<li>特点:分配时随机的;回收时仅需插入到表头</li>
+</ul>
+<h3 id="最佳拟合法-Best-fit"><a href="#最佳拟合法-Best-fit" class="headerlink" title="最佳拟合法 (Best fit)"></a>最佳拟合法 (Best fit)</h3><ul>
+<li>分配时:扫描整个可利用空间链表,找到一个大小满足要求且最接近 n 的空闲块,将其中的一部分 ( 即所需要大小 ) 分配给用户,剩下部分仍然是一个空闲块结点</li>
+<li>回收时:只要将释放的空闲块插入到可利用空间链表的合适位置</li>
+<li>为了使分配时不需要扫描整个可利用空间链表,链表组织 ( 包括块回收时 ) 成按从小到大排序 ( 升序 )</li>
+<li>优点:适用于请求分配的内存块大小范围较广的系统</li>
+<li>缺点:系统容易产生无法分配的内存碎片;无论分配与回收,都需要查找空闲链表,最费时</li>
+</ul>
+<h3 id="最差拟合法-Worst-fit"><a href="#最差拟合法-Worst-fit" class="headerlink" title="最差拟合法 (Worst fit)"></a>最差拟合法 (Worst fit)</h3><ul>
+<li>分配时:扫描整个可利用空间链表,找到一个大小最大的空闲块,将其中的一部分 ( 所需要大小 ) 分配给用户,剩下部分仍然是一个空闲块结点</li>
+<li>回收时:只要将释放的空闲块插入到链表的合适位置</li>
+<li>为了使分配时不需要扫描整个可利用空间链表,链表组织 ( 块回收时 ) 成按从大到小排序 (降序 )</li>
+<li>特点:适用于请求分配的内存块的大小范围较窄的系统;分配无需查找,回收需要查找适当的位置</li>
+</ul>
+<h3 id="边界标识法-Boundary-Tag-Method"><a href="#边界标识法-Boundary-Tag-Method" class="headerlink" title="边界标识法 (Boundary Tag Method)"></a>边界标识法 (Boundary Tag Method)</h3><ul>
+<li>操作系统中常用的动态存储管理方法</li>
+<li>将所有的空闲块链接成一个双重循环链表</li>
+<li>每个内存区域的头部和底部两个边界上分别设置标识,以标识该区域为占用块或空闲块</li>
+<li>在回收块时易于判别在物理位置上与其相邻的内存区域是否为空闲块,以便于将所有地址连续的空闲存储区合并成一个尽可能大的空闲块</li>
+</ul>
+<p>可利用空间表的节点结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">typedef struct word &#123;</span><br><span class="line">union &#123;</span><br><span class="line">// 头部域,指向前驱结点</span><br><span class="line">  struct word *llink;</span><br><span class="line">// 尾部域,指向本结点的头部</span><br><span class="line">  struct word *uplink;</span><br><span class="line">&#125;;</span><br><span class="line">  int tag; //0 :空闲; 1 :占用</span><br><span class="line">  int size;</span><br><span class="line">// 头部域,指向后继结点</span><br><span class="line">  struct word *rlink;</span><br><span class="line">//OtherType other;</span><br><span class="line">&#125;WORD, head, foot, *Space;</span><br><span class="line">// 指向 p 所指结点的底部</span><br><span class="line">#define FootLoc(p) (p+p-&gt;size-1)</span><br><span class="line">Space FootLoc(Space p) &#123;</span><br><span class="line">  char *q; Space f;</span><br><span class="line">  q=(char *)p;</span><br><span class="line">  f=(Space)(q+sizeof(char)*p-&gt;size-sizeof(foot));</span><br><span class="line">  return f;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="分配算法：两个约定"><a href="#分配算法：两个约定" class="headerlink" title="分配算法：两个约定"></a>分配算法：两个约定</h3><h4 id="分配约定"><a href="#分配约定" class="headerlink" title="分配约定"></a>分配约定</h4><ul>
+<li>选定适当常量 e ,设待分配空闲块、请求分配空间的大小分别为 m 、 n</li>
+<li>当 m-n&lt;=e 时:将整个空闲块分配给用户;</li>
+<li>当 m-n&gt;e 时:则只分配请求的大小 n 给用户;</li>
+<li>尽量减少空闲块链表中出现小碎片 ( 容量 ≤ e) ,提高分配效率;减少对空闲块链表的维护工作量</li>
+<li>为了避免修改指针,约定将高地址部分分配给用户</li>
+</ul>
+<h4 id="查找约定"><a href="#查找约定" class="headerlink" title="查找约定"></a>查找约定</h4><ul>
+<li>每次需要查找空闲块时,从上次刚分配结点的后继结点开始查找空闲块</li>
+<li>作用:提高查找空闲块的速度,防止小容量结点聚集</li>
+</ul>
+<h3 id="分配算法：首次拟合法"><a href="#分配算法：首次拟合法" class="headerlink" title="分配算法：首次拟合法"></a>分配算法：首次拟合法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">const int e = 16; // 不保留小于等于 e 的剩余量</span><br><span class="line">// 若有不小于 n 的空闲块,则分配相应的存储块,并返</span><br><span class="line">回其首地址, 否则返回 NULL</span><br><span class="line">Space AllocBoundTag(Space pav, int n) &#123;</span><br><span class="line">  Space p;</span><br><span class="line">// 查找不小于 n 的空闲块</span><br><span class="line">  for (p=pav; p &amp;&amp; p-&gt;size&lt;n &amp;&amp; p-&gt;rlink!=pav; p=p-&gt;rlink);</span><br><span class="line">  if (!p || p-&gt;size&lt;n) return NULL; // 找不到,返回空指针</span><br><span class="line">  else &#123; // p 指向找到的空闲块</span><br><span class="line">    Space f = FootLoc(p); // f 指向底部</span><br><span class="line">    pav = p-&gt;rlink;</span><br><span class="line">// pav 指向 *p 结点的后继结点</span><br><span class="line">    if (p-&gt;size-n &lt;= e) &#123; // 整块分配,不保留小于等于 e 的剩余量</span><br><span class="line">      if (pav==p) pav = NULL; // 可利用空间表变为空表</span><br><span class="line">      else &#123; // 在表中删除分配的结点</span><br><span class="line">        pav-&gt;llink = p-&gt;llink; p-&gt;llink-&gt;rlink = pav;</span><br><span class="line">      &#125;</span><br><span class="line">      p-&gt;tag = f-&gt;tag = 1; // 修改分配结点的头部和底部标志</span><br><span class="line">    &#125;</span><br><span class="line">    else &#123; // 分配该块的后 n 个字</span><br><span class="line">      f-&gt;tag = 1; // 修改分配块的底部标志</span><br><span class="line">      p-&gt;size -= n; // 置剩余块大小</span><br><span class="line">      f = FootLoc(p); // 指向剩余块底部</span><br><span class="line">      f-&gt;tag = 0; f-&gt;uplink = p; // 设置剩余块底部</span><br><span class="line">      p = f+1; // 指向分配块头部</span><br><span class="line">      p-&gt;tag = 1; p-&gt;size = n; // 设置分配块头部</span><br><span class="line">    &#125;</span><br><span class="line">    return p; // 返回分配块首地址</span><br><span class="line">  &#125;</span><br><span class="line">&#125; // AllocBoundTag</span><br></pre></td></tr></table></figure>
+
+<h3 id="回收算法"><a href="#回收算法" class="headerlink" title="回收算法"></a>回收算法</h3><h4 id="情况1"><a href="#情况1" class="headerlink" title="情况1"></a>情况1</h4><ul>
+<li>释放块的左、右邻块均为占用块:将被释放块简单地插入到空闲块链表中即可</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">p-&gt;tag=0 ; FootLoc(p)-&gt;uplink=p;</span><br><span class="line">FootLoc(p)-&gt;tag=0;</span><br><span class="line">if ( !pav )</span><br><span class="line">pav=p-&gt;llink=p-&gt;rlink=p; // 第一个空闲块</span><br><span class="line">else &#123;// 刚释放的空闲结点是插在 pav 之前,并成为 pav</span><br><span class="line">q=pav-&gt;llink; p-&gt;rlink=pav ;</span><br><span class="line">p-&gt;llink=q ; q-&gt;rlink=pav-&gt;llink=p ;</span><br><span class="line">pav=p ; //pav 指向刚释放的空闲结点</span><br><span class="line">// 成为下次分配最先查询的结点</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="情况2、3"><a href="#情况2、3" class="headerlink" title="情况2、3"></a>情况2、3</h4><ul>
+<li>释放块的左邻块空闲而右邻块为占用:和左邻块合并成一个大的空闲块结点,改变左邻块的 size 域及重新设置 ( 合并后 ) 结点的底部</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">n=p-&gt;size;</span><br><span class="line">s=(p-1)-&gt;uplink; s-&gt;size+=n; // 设置新空闲块大小</span><br><span class="line">f=FootLoc(p); f-&gt;uplink=s; f-&gt;tag=0; // 设置新空闲块底部</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>释放块的左邻占用而右邻空闲:和右邻块合并成一个大的空闲块结点,改变右邻块的 size 域及重新设置( 合并后 ) 结点的头部</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">t= FootLoc(p)+1; p-&gt;tag=0; q=t-&gt;llink;</span><br><span class="line">p-&gt;llink=q; q-&gt;rlink=p ; // 设置空闲块的前驱</span><br><span class="line">q1=t-&gt;rlink ; p-&gt;rlink=q1 ; q1-&gt;llink=p ;</span><br><span class="line">p-&gt;size+=t-&gt;size; // 设置新空闲块大小</span><br><span class="line">FootLoc(t)-&gt;uplink=p ; // 底部指针指向新结点的头部</span><br></pre></td></tr></table></figure>
+
+<h4 id="情况4"><a href="#情况4" class="headerlink" title="情况4"></a>情况4</h4><ul>
+<li>释放块的左、右邻块均为空闲块:和左、右邻块合并成一个大的空闲块结点,改变左邻块的 size 域及重新设置 ( 合并后 ) 结点的底部</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">n=p-&gt;size;</span><br><span class="line">s=(p-1)-&gt;uplink;//s 指向左邻块</span><br><span class="line">t= FootLoc(p)+1; //t 指向右邻块 , p+p-&gt;size</span><br><span class="line">s-&gt;size +=n+t-&gt;size; // 设置新空闲结点的大小</span><br><span class="line">// 在空闲链表中,删除右邻空闲块</span><br><span class="line">q=t-&gt;llink; q1=t-&gt;rlink; // 修改右邻原来的关系</span><br><span class="line">q-&gt;rlink=q1; q1-&gt;llink=q ;</span><br><span class="line">FootLoc(t)-&gt;uplink=s; // 新结点底部指针指向其头部</span><br></pre></td></tr></table></figure>
+
+<h3 id="伙伴系统-Buddy-System"><a href="#伙伴系统-Buddy-System" class="headerlink" title="伙伴系统 (Buddy System)"></a>伙伴系统 (Buddy System)</h3><ul>
+<li>操作系统中常用的动态存储管理方法</li>
+<li>与边界标识法类似,所不同是:无论占用块或空闲块,其大小均为 2 的 k 次幂 ,不是以顺序片段来分配内存</li>
+<li>伙伴系统的可利用空间表:<ul>
+<li>将所有大小相同的空闲块建于一张子表中,每个子表是一个双重链表,这样的链表可能有 m+1 个</li>
+<li>再将这 m+1 个表头指针用向量结构组织成一个表</li>
+</ul>
+</li>
+</ul>
+<p>可利用空间表的结构:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#define M 16</span><br><span class="line">typedef struct WORD_b &#123;</span><br><span class="line">  WORD_b * llink;// 前驱结点</span><br><span class="line">  int tag;// 块占用标识</span><br><span class="line">  int kval;// 块的大小,是 2 的幂次</span><br><span class="line">  WORD_b *rlink;// 后继结点</span><br><span class="line">  OtherType other;</span><br><span class="line">&#125; WORD_b, head;</span><br><span class="line">typedef struct HeadNode &#123;</span><br><span class="line">  int nodesize;</span><br><span class="line">  WORD_b * first;</span><br><span class="line">&#125; FreeList[M+1];// 子表个数为 M+1</span><br></pre></td></tr></table></figure>
+
+<h4 id="伙伴系统的分配算法"><a href="#伙伴系统的分配算法" class="headerlink" title="伙伴系统的分配算法"></a>伙伴系统的分配算法</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">WORD_b* AllocBuddy (FreeList avail[], int n) &#123;</span><br><span class="line">// avail[0..m] 为可利用空间表, n 为申请分配量,若有不小于n 的空闲块,则分配相应的存储块,并返回其首地址;否则返回 NULL</span><br><span class="line">  WORD_b *pa, *pre, *suc, *pi;</span><br><span class="line">// 查找满足分配要求的子表</span><br><span class="line">  for (int k=0; k&lt;=m &amp;&amp; (!avail[k].first ||avail[k].nodesize&lt;n+1);k++) ;</span><br><span class="line">  if (k&gt;m) return NULL; // 分配失败</span><br><span class="line">  else &#123; // 进行分配</span><br><span class="line">    pa = avail[k].first; // 指向可分配子表的第一个结点</span><br><span class="line">// 分别指向前驱和后继</span><br><span class="line">    pre = pa-&gt;llink; suc = pa-&gt;rlink;</span><br><span class="line">    if (pa==suc)</span><br><span class="line">      avail[k].first = NULL; // 分配后该子表变成空表</span><br><span class="line">    else &#123; // 从子表删去 *pa 结点</span><br><span class="line">      pre-&gt;rlink = suc; suc-&gt;llink = pre;</span><br><span class="line">      avail[k].first = suc;</span><br><span class="line">    &#125;</span><br><span class="line">// 将剩余块插入相应子表</span><br><span class="line">    for (int i=1; avail[k-i].nodesize&gt;=n+1; ++i) &#123;</span><br><span class="line">      pi = pa+(int)pow(2, (k-i)); pi-&gt;rlink = pi;</span><br><span class="line">      pi-&gt;llink = pi; pi-&gt;tag = 0; pi-&gt;kval = k-i;</span><br><span class="line">      avail[k-i].first = pi; </span><br><span class="line">    &#125;</span><br><span class="line">    pa-&gt;tag = 1; pa-&gt;kval = k-(--i);</span><br><span class="line">  &#125;</span><br><span class="line">  return pa;</span><br><span class="line">&#125; // AllocBuddy</span><br></pre></td></tr></table></figure>
+
+<h4 id="回收算法-1"><a href="#回收算法-1" class="headerlink" title="回收算法"></a>回收算法</h4><ul>
+<li>释放占用块时,需要将该新的空闲块插入到可利用空闲表中</li>
+<li>考虑合并成大块的问题:只有 “ 互为伙伴 ” 的两个子块均空闲时才合并;即使有两个相邻且大小相同的空闲块,如果不是 “ 互为伙伴 ” ( 从同一个大块中分裂出来的 ) 也不合并。</li>
+</ul>
+<p>设要回收的空闲块的首地址是 p ,其大小为 2^k :<br> (1) 判断其 “ 互为伙伴 ” 的块是否空闲:</p>
+<ul>
+<li>若不空闲,仅将要回收的空闲块直接插入到相应的子表中;否则转 (2) ;</li>
+</ul>
+<p>(2) 按以下步骤进行空闲块的合并:</p>
+<ul>
+<li>在相应子表中找到其伙伴并删除之;</li>
+<li>合并两个空闲块;</li>
+</ul>
+<p>(3) 重复 (2) ,直到合并后的空闲块的伙伴不是空闲块为止</p>
+<ul>
+<li>特点:算法简单;速度快;但容易产生碎片</li>
+</ul>
+<h3 id="无用单元收集"><a href="#无用单元收集" class="headerlink" title="无用单元收集"></a>无用单元收集</h3><ul>
+<li>无用单元:用户不再使用而系统没有回收的变量和结构</li>
+<li>产生原因:程序 Bug</li>
+</ul>
+<p>– p=malloc(size); … … p=NULL; // 未回收的空间<br>– p=malloc(size); … … q=p;free(p);// 悬挂访问</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Memory-Management/" rel="tag"># Memory-Management</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2017/06/20/Linux-Command-Line-learning-notes-Part3/" rel="prev" title="《Linux 命令行大全》学习笔记-Part3">
+                  <i class="fa fa-chevron-left"></i> 《Linux 命令行大全》学习笔记-Part3
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2017/08/08/Inner-Sort/" rel="next" title="内部排序">
+                  内部排序 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ucasfl</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="Chapter 14 软件包管理低级软件包：  Debian : dpkg&#x2F;rpm  dpkg –install file.deb&#x2F;rpm -i package_file&#x2F;rpm -U package_file：安装&#x2F;升级软件 dpkg –list ：列出所有已安装软件 dpkg –status package_name：判断是否已安装 dpkg –search filename&#x2F;rpm -qf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Linux 命令行大全》学习笔记-Part3">
+<meta property="og:url" content="https://ucasfl.github.io/2017/06/20/Linux-Command-Line-learning-notes-Part3/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="Chapter 14 软件包管理低级软件包：  Debian : dpkg&#x2F;rpm  dpkg –install file.deb&#x2F;rpm -i package_file&#x2F;rpm -U package_file：安装&#x2F;升级软件 dpkg –list ：列出所有已安装软件 dpkg –status package_name：判断是否已安装 dpkg –search filename&#x2F;rpm -qf">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-06-20T04:54:21.000Z">
+<meta property="article:modified_time" content="2021-09-30T08:29:04.107Z">
+<meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="Reading-Summary">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://ucasfl.github.io/2017/06/20/Linux-Command-Line-learning-notes-Part3/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2017/06/20/Linux-Command-Line-learning-notes-Part3/","path":"2017/06/20/Linux-Command-Line-learning-notes-Part3/","title":"《Linux 命令行大全》学习笔记-Part3"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>《Linux 命令行大全》学习笔记-Part3 | Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-14-%E8%BD%AF%E4%BB%B6%E5%8C%85%E7%AE%A1%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">Chapter 14 软件包管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-15-%E5%AD%98%E5%82%A8%E4%BB%8B%E8%B4%A8"><span class="nav-number">2.</span> <span class="nav-text">Chapter 15 存储介质</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-16-%E7%BD%91%E7%BB%9C"><span class="nav-number">3.</span> <span class="nav-text">Chapter 16 网络</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93"><span class="nav-number">3.1.</span> <span class="nav-text">文件传输</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-17-%E6%96%87%E4%BB%B6%E6%90%9C%E7%B4%A2"><span class="nav-number">4.</span> <span class="nav-text">Chapter 17 文件搜索</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-18-%E5%BD%92%E6%A1%A3%E5%92%8C%E5%A4%87%E4%BB%BD"><span class="nav-number">5.</span> <span class="nav-text">Chapter 18 归档和备份</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-19-%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="nav-number">6.</span> <span class="nav-text">Chapter 19 正则表达式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%9A"><span class="nav-number">6.1.</span> <span class="nav-text">正则表达式：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BB%BB%E6%84%8F%E5%AD%97%E7%AC%A6%EF%BC%9A"><span class="nav-number">6.1.1.</span> <span class="nav-text">任意字符：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%BC%80%E5%A4%B4%E5%AD%97%E7%AC%A6%E5%92%8C%E6%9C%AB%E5%B0%BE%E5%AD%97%E7%AC%A6%EF%BC%9A"><span class="nav-number">6.1.2.</span> <span class="nav-text">开头字符和末尾字符：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%AD%E6%8B%AC%E5%8F%B7%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%92%8C%E5%AD%97%E7%AC%A6%E7%B1%BB"><span class="nav-number">6.1.3.</span> <span class="nav-text">中括号表达式和字符类</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%90%A6%E5%AE%9A"><span class="nav-number">6.1.4.</span> <span class="nav-text">否定</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E8%8C%83%E5%9B%B4"><span class="nav-number">6.1.5.</span> <span class="nav-text">字符范围</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#POSIX-%E5%AD%97%E7%AC%A6%E9%9B%86"><span class="nav-number">6.1.6.</span> <span class="nav-text">POSIX 字符集</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%88%96%E9%80%89%E9%A1%B9%EF%BC%9A"><span class="nav-number">6.1.7.</span> <span class="nav-text">或选项：|</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E6%9F%90%E5%85%83%E7%B4%A00%E6%AC%A1%E6%88%961%E6%AC%A1%EF%BC%9A"><span class="nav-number">6.1.8.</span> <span class="nav-text">匹配某元素0次或1次：?</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D0%E6%AC%A1%E6%88%96%E5%A4%9A%E6%AC%A1%EF%BC%9A"><span class="nav-number">6.1.9.</span> <span class="nav-text">匹配0次或多次： *</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E4%B8%80%E6%AC%A1%E6%88%96%E5%A4%9A%E6%AC%A1%EF%BC%9A"><span class="nav-number">6.1.10.</span> <span class="nav-text">匹配一次或多次： +</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BB%A5%E6%8C%87%E5%AE%9A%E6%AC%A1%E6%95%B0%E5%8C%B9%E9%85%8D%EF%BC%9A"><span class="nav-number">6.1.11.</span> <span class="nav-text">以指定次数匹配：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#less-%E5%92%8C-Vim"><span class="nav-number">6.1.12.</span> <span class="nav-text">less 和 Vim</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-20-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86"><span class="nav-number">7.</span> <span class="nav-text">Chapter 20 文本处理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#cat-%E8%BF%9B%E8%A1%8C%E6%96%87%E4%BB%B6%E9%97%B4%E7%9A%84%E6%8B%BC%E6%8E%A5%E5%B9%B6%E8%BE%93%E5%87%BA%E5%88%B0%E6%A0%87%E5%87%86%E8%BE%93%E5%87%BA"><span class="nav-number">7.0.1.</span> <span class="nav-text">cat : 进行文件间的拼接并输出到标准输出</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#sort-%E5%AF%B9%E6%96%87%E6%9C%AC%E8%BF%9B%E8%A1%8C%E6%8E%92%E5%BA%8F"><span class="nav-number">7.0.2.</span> <span class="nav-text">sort : 对文本进行排序</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#uniq"><span class="nav-number">7.0.3.</span> <span class="nav-text">uniq</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#cut"><span class="nav-number">7.0.4.</span> <span class="nav-text">cut</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#paste-%E5%90%88%E5%B9%B6%E6%96%87%E6%9C%AC%E8%A1%8C"><span class="nav-number">7.1.</span> <span class="nav-text">paste - 合并文本行</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#join-%E8%BF%9E%E6%8E%A5%E4%B8%A4%E4%B8%AA%E6%96%87%E4%BB%B6%E4%B8%AD%E5%85%B7%E6%9C%89%E7%9B%B8%E5%90%8C%E5%AD%97%E6%AE%B5%E7%9A%84%E8%A1%8C"><span class="nav-number">7.2.</span> <span class="nav-text">join - 连接两个文件中具有相同字段的行</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#comm-%E9%80%90%E8%A1%8C%E6%AF%94%E8%BE%83%E4%B8%A4%E4%B8%AA%E5%B7%B2%E6%8E%92%E5%BA%8F%E5%A5%BD%E7%9A%84%E6%96%87%E4%BB%B6"><span class="nav-number">7.3.</span> <span class="nav-text">comm - 逐行比较两个已排序好的文件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-21-%E6%A0%BC%E5%BC%8F%E5%8C%96%E8%BE%93%E5%87%BA"><span class="nav-number">8.</span> <span class="nav-text">Chapter 21 格式化输出</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#nl-%E5%AF%B9%E8%A1%8C%E8%BF%9B%E8%A1%8C%E6%A0%87%E5%8F%B7"><span class="nav-number">8.1.</span> <span class="nav-text">nl - 对行进行标号</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#fold-%E8%AE%BE%E5%AE%9A%E6%96%87%E6%9C%AC%E8%A1%8C%E9%95%BF%E5%BA%A6"><span class="nav-number">8.2.</span> <span class="nav-text">fold - 设定文本行长度</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-22-%E6%89%93%E5%8D%B0"><span class="nav-number">9.</span> <span class="nav-text">Chapter 22 打印</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chapter-23-%E7%BC%96%E8%AF%91%E7%A8%8B%E5%BA%8F"><span class="nav-number">10.</span> <span class="nav-text">Chapter 23 编译程序</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="ucasfl"
+      src="/photos/ppp.jpg">
+  <p class="site-author-name" itemprop="name">ucasfl</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/06/20/Linux-Command-Line-learning-notes-Part3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《Linux 命令行大全》学习笔记-Part3
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-06-20 12:54:21" itemprop="dateCreated datePublished" datetime="2017-06-20T12:54:21+08:00">2017-06-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h3 id="Chapter-14-软件包管理"><a href="#Chapter-14-软件包管理" class="headerlink" title="Chapter 14 软件包管理"></a>Chapter 14 软件包管理</h3><p>低级软件包：</p>
+<ul>
+<li><p>Debian : dpkg/rpm</p>
+<ul>
+<li>dpkg –install file.deb/rpm -i package_file/rpm -U package_file：安装/升级软件</li>
+<li>dpkg –list ：列出所有已安装软件</li>
+<li>dpkg –status package_name：判断是否已安装</li>
+<li>dpkg –search filename/rpm -qf file_name：查询文件所属命令</li>
+</ul>
+</li>
+<li><p>高级软件包：apt-get</p>
+<ul>
+<li>apt-get update ; apt-cache search file_name：搜索软件包</li>
+<li>apt-get update ; apt-get install package_name：安装软件包</li>
+<li>apt-get remove package_name/yum erase package_name：删除软件包，彻底删除干净，可加上 –purge 参数</li>
+<li>apt-get update ; apt-get upgrade ：更新/升级软件包</li>
+<li>apt-cache show packagename ：显示软件包相关信息</li>
+<li>apt-cache search package_name/yum search package_name：搜索软件包</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+
+<h3 id="Chapter-15-存储介质"><a href="#Chapter-15-存储介质" class="headerlink" title="Chapter 15 存储介质"></a>Chapter 15 存储介质</h3><p>/etc/fstab 文件：显示系统启动时挂载的设备。</p>
+<ul>
+<li>mount ：查看已挂载文件系统（不带参数）</li>
+<li>mount -t ext4 /dev/sda1 /mnt ：挂载文件系统（root 权限），-t 选项指定文件系统类型</li>
+<li>umount /dev/hdc：卸载设备</li>
+<li>ls /dev：查看/dev目录下的设备信息</li>
+<li>sudo tail -f /var/log/messages ：实时系统监测</li>
+<li>sudo fdisk /dev/sdb：磁盘分区</li>
+<li>sudo fdformat /dev/sdb1：格式化</li>
+<li>sudo mkfs -t ext4 /dev/sdb1：创建新的文件系统(-t vfat:fat32)</li>
+<li>sudo fsck /dev/sdb1：检查闪存（事先需卸载）</li>
+<li>dd if=input_file of=output_file：文件复制（数据块）<ul>
+<li>example: dd if=/dev/sdb of=/dev/sdc</li>
+<li>​                  dd if=ubuntu.iso of=/dev/sdc（创建系统启动盘）</li>
+</ul>
+</li>
+<li>挂载镜像文件：mkdir /mnt/iso_file; mount -t iso9660 -o loop image.iso /mnt/iso_file</li>
+<li>wodim dev=/dev/cdrw blank=fast ：擦除设备</li>
+<li>wodim dev=/dev/cdrw image.iso ：写入镜像文件</li>
+<li>md5sum image.iso：计算校验和</li>
+</ul>
+<h3 id="Chapter-16-网络"><a href="#Chapter-16-网络" class="headerlink" title="Chapter 16 网络"></a>Chapter 16 网络</h3><ul>
+<li><p>ping ：向网络主机发送特殊数据包，检测网络是否连通，例如：ping linux.com</p>
+</li>
+<li><p>traceroute ：跟踪网络数据包的传输路径，例如：traceroute ucasfl.me</p>
+</li>
+<li><p>netstat ：检查网络设置及相关统计数据</p>
+<ul>
+<li><p>-ie 选项：检查系统中的网络接口信息</p>
+</li>
+<li><p>-r 选项：显示内核的网络路由表</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="文件传输"><a href="#文件传输" class="headerlink" title="文件传输"></a>文件传输</h4><p>ftp:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ftp fileserver:连接主机</span><br><span class="line">cd dir:进入目录</span><br><span class="line">ls:列出内容</span><br><span class="line">lcd dir ：切换目录</span><br><span class="line">get something:下载东西</span><br><span class="line">help:显示命令列表</span><br></pre></td></tr></table></figure>
+
+<p>lftp：与 ftp 类似，支持更多的协议和功能</p>
+<ul>
+<li>wget ：用于文件下载的命令行程序，既可从网站上下载，也可从 ftp 站点下载<ul>
+<li>example:　<code>wget http://ucasfl.me/scripts/vim_config.sh</code></li>
+</ul>
+</li>
+<li>ssh:安全登录远程计算机：ssh user@hostname/ip </li>
+<li>ssh user@remote_host command : 远程执行命令</li>
+<li>scp user@remote_host:document.txt /user/home/ ：将远程文件复制到当前的 home 目录下</li>
+<li>sftp : 命令与 ftp 类似，不过远程主机不需要 ftp 服务器，只需要 ssh 服务器</li>
+</ul>
+<h3 id="Chapter-17-文件搜索"><a href="#Chapter-17-文件搜索" class="headerlink" title="Chapter 17 文件搜索"></a>Chapter 17 文件搜索</h3><ul>
+<li>locate filename：搜索文件，支持扩展，例如：locate zip :搜索以 zip 开头的文件</li>
+</ul>
+<p>find : 较复杂的方式查找文件</p>
+<p>find ~ | wc -l : 计算当前系统总目录的文件数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">find ~ -type x : 指定类型查找，x 为参数</span><br><span class="line">x:</span><br><span class="line"> b:块设备文件</span><br><span class="line"> c:字符设备文件</span><br><span class="line"> d:目录文件</span><br><span class="line"> f:普通文件</span><br><span class="line"> l:符号链接</span><br></pre></td></tr></table></figure>
+
+<p>find 命令的 test 项参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">-cmin n ：匹配n分钟前改变状态的文件或目录，不到n分钟，用 -n，超过n分钟，用+n</span><br><span class="line">-cnewer file :匹配内容或属性的修改时间比file晚的文件或目录</span><br><span class="line">-ctime 24:匹配系统中n*24小时前文件状态被改变的文件或目录</span><br><span class="line">-empty: 匹配空文件或空目录</span><br><span class="line">-group name:匹配属于name组的文件或目录</span><br><span class="line">-iname pattern:与-name test项功能类似，只是不区分大小写</span><br><span class="line">-inum n:匹配索引节点是n的文件</span><br><span class="line">-mmin n:匹配n分钟前内容被修改的文件或目录</span><br><span class="line">-mtime n:匹配n*24小时前只有内容被修改的文件或目录</span><br><span class="line">-name pattern :匹配有特定通配符的文件或目录</span><br><span class="line">-newer file :匹配内容的修改时间比file文件更近的文件或目录</span><br><span class="line">-nouser:匹配不属于有效用户的文件或目录</span><br><span class="line">-nogroup:匹配不属于有效组的文件或目录</span><br><span class="line">-perm mode :寻找访问权限与既定模式匹配的文件或目录</span><br><span class="line">-samefile name:与-inum test 选项类似</span><br><span class="line">-size n:匹配n大小的文件</span><br><span class="line">-type c:匹配c类型的文件</span><br><span class="line">-user name:匹配属于name用户的文件或目录</span><br></pre></td></tr></table></figure>
+
+<p>find 命令的逻辑操作符：</p>
+<ul>
+<li>-and :与</li>
+<li>-or : 或</li>
+<li>-not : 非</li>
+<li>() : 括号</li>
+</ul>
+<p>注：在shell中，括号需要加反斜杠进行转义。</p>
+<p>action 选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">预定义操作：</span><br><span class="line">-delete: 删除匹配文件</span><br><span class="line">-ls: 对匹配的文件执行ls操作</span><br><span class="line">-print: 将匹配的文件的全路径以标准形式打印出，默认形式</span><br><span class="line">-quit: 匹配成功便退出</span><br></pre></td></tr></table></figure>
+
+<p>自定义操作：</p>
+<p>-exec/-ok command {}; :command 为预执行命令(-ok会在每一次执行命令前询问用户)</p>
+<p>touch filename: 设定或更新文件的修改时间，文件不存在时，会创建一个新文件(空文件)</p>
+<p>stat filename: 显示文件的所有信息及属性</p>
+<p>option选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">-depth: 引导find程序处理目录前先处理目录内的文件</span><br><span class="line">-maxdepth levels: 当执行测试条件行为时，设置find程序陷入的目录数的最大级别数</span><br><span class="line">-mindepth levels: 设置find程序陷入目录数的最小级别数</span><br><span class="line">-noleaf: 指导find程序不要基于“正在搜索类UNIX文件系统”的假设来优化搜索，当扫描DOS/Windows文件系统和CD时，会用到该选项</span><br><span class="line">-mount: 引导find程序不要遍历挂载在其他文件系统上的目录</span><br></pre></td></tr></table></figure>
+
+<h3 id="Chapter-18-归档和备份"><a href="#Chapter-18-归档和备份" class="headerlink" title="Chapter 18 归档和备份"></a>Chapter 18 归档和备份</h3><p>gzip:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gzip filename: 压缩文件</span><br><span class="line">gunzip filename.gz: 解压缩文件</span><br></pre></td></tr></table></figure>
+
+<p>gzip 命令的一些选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">-c: 将输出内容写到标准输出端口并且保持原有文件</span><br><span class="line">-d: 解压缩，gzip -d == gunzip</span><br><span class="line">-f: 强制压缩</span><br><span class="line">-h: 显示有用信息，可用 --help 代替</span><br><span class="line">-l: 列出所有压缩文件的压缩统计，也可以用 --list 代替</span><br><span class="line">-r: 存在目录时，递归压缩 ==--recursive</span><br><span class="line">-t: 检验压缩文件的完整性 ==--test</span><br><span class="line">-v: 在压缩时显示详细信息，==--verbose</span><br><span class="line">-number: 设置压缩级别，number是1~9的一个数，默认压缩级别是6</span><br></pre></td></tr></table></figure>
+
+<p>bzip2/bunzip2: 与gzip命令类似，不过使用不同的压缩算法，该算法具有高质量的数据压缩能力，但降低了压缩速度。</p>
+<p>tar: 归档文件</p>
+<p>用法：tar mode pathname…</p>
+<p>tar命令的操作模式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">c: 创建文件或目录的归档文件</span><br><span class="line">x: 从归档文件中提取文件</span><br><span class="line">t: 在归档文件末尾追加指定路径名</span><br><span class="line">r: 列出归档文件的内容</span><br><span class="line">f: 指定归档文件名</span><br><span class="line">v: 获取详细信息</span><br></pre></td></tr></table></figure>
+
+<p>example:</p>
+<ul>
+<li>tar cf/cvf file.tar file: 归档文件</li>
+<li>tar xf/xvf file.tar file: 提取文件</li>
+</ul>
+<p>zip: 打包压缩文件</p>
+<p>example: zip -r file.zip file</p>
+<p>解压缩：unzip file.zip</p>
+<p>rsync: 远程文件、目录的同步</p>
+<h3 id="Chapter-19-正则表达式"><a href="#Chapter-19-正则表达式" class="headerlink" title="Chapter 19 正则表达式"></a>Chapter 19 正则表达式</h3><p>grep: 文本搜索，搜索文本文件中与指定正则表达式匹配的行，并送至标准输出</p>
+<p>命令用法： grep mode searchfile，例如 grep -h ‘^int$’ test.c </p>
+<p>grep 选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-i: 忽略大小写</span><br><span class="line">-v: 输出不匹配行</span><br><span class="line">-c: 输出匹配项数目</span><br><span class="line">-l: 输出匹配项文件名而不是直接输出匹配行</span><br><span class="line">-L: 与-l类似，但输出不包含匹配项的文件名</span><br><span class="line">-n: 在每个匹配行前面加上该行在文件中的行号</span><br><span class="line">-h: 进行多文件搜索时，抑制文件名输出</span><br></pre></td></tr></table></figure>
+
+<h4 id="正则表达式："><a href="#正则表达式：" class="headerlink" title="正则表达式："></a>正则表达式：</h4><p>详细内容可查看计算理论相关书籍。</p>
+<p>元字符：^ $  . [ ] - ?  * + ( ) | \ </p>
+<p>a/A~z/Z 为文字字符</p>
+<p>注：在命令行中输入包含元字符的正则表达式时，应把元字符用引号括起来以避免不必要的shell 扩展。</p>
+<h5 id="任意字符："><a href="#任意字符：" class="headerlink" title="任意字符："></a>任意字符：</h5><p>. : 匹配任意字符</p>
+<p>example: ls /usr/bin/ | grep -h ‘.zip’</p>
+<p>注意，上面输出中并不会包含zip，因为zip只包含三个字符，而这里至少要有四个字符。</p>
+<h5 id="开头字符和末尾字符："><a href="#开头字符和末尾字符：" class="headerlink" title="开头字符和末尾字符："></a>开头字符和末尾字符：</h5><p>^ : 匹配开头字符</p>
+<p>$ : 匹配末尾字符</p>
+<p>example : ls /usr/bin | grep -h ‘^zip’ : 匹配以zip开头的输出</p>
+<p>ls /usr/bin | grep -h ‘zip$’ : 匹配以zip结尾的输出</p>
+<p>ls /usr/bin | grep -h ‘^zip$’ : 输出只有zip</p>
+<h5 id="中括号表达式和字符类"><a href="#中括号表达式和字符类" class="headerlink" title="中括号表达式和字符类"></a>中括号表达式和字符类</h5><p>中括号除了可用于匹配正则表达式中的给定字符外，还可用于匹配字符集中的单个字符。借助中括号，也可指定要匹配的字符集，例如：ls /usr/bin | grep -h ‘[bg]zip’ 会输出以bzip和gzip开头的输出。</p>
+<p>注：^在中括号中表示否定；-在中括号中表示字符范围。</p>
+<h5 id="否定"><a href="#否定" class="headerlink" title="否定"></a>否定</h5><p>在中括号中使用 ^ ,表示剩余字符不应该出现，例如：</p>
+<p><code>ls /usr/bin/ | grep -h &#39;[^bg]zip&#39;</code> 会得到包含zip但zip前面既不是b，又不是g的程序。</p>
+<p>注：^ 只有在中括号中的第一个字符才会当作否定符，否则当作普通符号处理。</p>
+<h5 id="字符范围"><a href="#字符范围" class="headerlink" title="字符范围"></a>字符范围</h5><p>使用 -</p>
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">grep -h &#x27;^[A-Z]&#x27; filename :所有以大写字母开头的行</span><br><span class="line">grep -h &#x27;^[A-Za-z0-9]&#x27; filename :所有以字母和数字开头的行</span><br><span class="line">grep -h &#x27;[-AZ]&#x27; filename :仅表示包含连字符，大写字母A或Z的行</span><br></pre></td></tr></table></figure>
+
+<h5 id="POSIX-字符集"><a href="#POSIX-字符集" class="headerlink" title="POSIX 字符集"></a>POSIX 字符集</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[:alnum:]  字母字符和数字字母，在ASCII中，与[A-Za-z0-9]等效</span><br><span class="line">[:word:]   与上者相比，多了下划线字符_</span><br><span class="line">[:alpha:]  字母字符，在ASCII中，等效于[A-Za-z]</span><br><span class="line">[:blank:]  空字符，包括空格和制表符</span><br><span class="line">[:cntrl:]  ASCII控制符，包括ASCII字符0~31以及127</span><br><span class="line">[:digit:]  数字0~9</span><br><span class="line">[:graph:]  可见字符，在ASCII中，包括字符33~126</span><br><span class="line">[:lower:]  小写字母</span><br><span class="line">[:punct:]  标点符号字符</span><br><span class="line">[:print:]  可打印字符，包括[:graph:]中的所有字符加上空格字符</span><br><span class="line">[:space:]  空白字符包括空格符，制表符，回车符，换行符垂直制表符以及换页符，在ASCII中，等价于[\t\r\n\v\f]</span><br><span class="line">[:upper:]  大写字母</span><br><span class="line">[:xdigit:] 用于表示十六进制的字符 ==[0-9a-fA-F]</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<p>ls /usr/sbin/[[:upper:]]* : 列出所有以大写字母开头的文件</p>
+<h5 id="或选项："><a href="#或选项：" class="headerlink" title="或选项：|"></a>或选项：|</h5><p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;AAA&quot; | grep -E &#x27;AAA|BBB|CCC&#x27;</span><br><span class="line">ls /usr/bin | grep -Eh &#x27;^(bz|gz|zip)&#x27; 匹配以bz或gz或zip开头的程序</span><br></pre></td></tr></table></figure>
+
+<h5 id="匹配某元素0次或1次："><a href="#匹配某元素0次或1次：" class="headerlink" title="匹配某元素0次或1次：?"></a>匹配某元素0次或1次：?</h5><p>? 置于字符的后面表示前面的字符（单个）匹配一次或零次</p>
+<h5 id="匹配0次或多次："><a href="#匹配0次或多次：" class="headerlink" title="匹配0次或多次： *"></a>匹配0次或多次： *</h5><p>用法和上者类似。</p>
+<h5 id="匹配一次或多次："><a href="#匹配一次或多次：" class="headerlink" title="匹配一次或多次： +"></a>匹配一次或多次： +</h5><p>用法和上者类似。</p>
+<h5 id="以指定次数匹配："><a href="#以指定次数匹配：" class="headerlink" title="以指定次数匹配："></a>以指定次数匹配：</h5><figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;n&#125;   前面的元素恰好出现n次</span><br><span class="line">&#123;n,m&#125; 前面的元素出现的次数在n<span class="operator">~</span>m之间时匹配</span><br><span class="line">&#123;n,&#125;  前面的元素超过n次时匹配</span><br><span class="line">&#123;,m&#125;  前面的元素不超过m次时匹配</span><br></pre></td></tr></table></figure>
+
+<p>locate 查找文件： </p>
+<p>选项： </p>
+<ul>
+<li>–regexp    支持基本正则表达式</li>
+<li>–regex      支持扩展正则表达式</li>
+</ul>
+<h5 id="less-和-Vim"><a href="#less-和-Vim" class="headerlink" title="less 和 Vim"></a>less 和 Vim</h5><p>二者皆支持正则表达式搜索，并且搜索方法相同：按下“/”键后，输入正则表达式，便可搜索。</p>
+<h3 id="Chapter-20-文本处理"><a href="#Chapter-20-文本处理" class="headerlink" title="Chapter 20 文本处理"></a>Chapter 20 文本处理</h3><h5 id="cat-进行文件间的拼接并输出到标准输出"><a href="#cat-进行文件间的拼接并输出到标准输出" class="headerlink" title="cat : 进行文件间的拼接并输出到标准输出"></a>cat : 进行文件间的拼接并输出到标准输出</h5><p>选项：</p>
+<ul>
+<li>-A    : 输出非打印字符</li>
+<li>-n    : 对行编号</li>
+<li>-s     : 禁止输出多个空白行</li>
+</ul>
+<h5 id="sort-对文本进行排序"><a href="#sort-对文本进行排序" class="headerlink" title="sort : 对文本进行排序"></a>sort : 对文本进行排序</h5><p>sort 是一个排序程序，操作对象为标准输入或是命令行中指定的一个或多个文件，然后将结果送至标准输出。</p>
+<p>example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sort &gt; foo.txt   可在键盘输入然后sort排序后输入到 foo.txt 中（重定向）</span><br><span class="line">sort file1 file2 file3 &gt; file_sorted  将三个文件进行排序后输出到一个文件中</span><br></pre></td></tr></table></figure>
+
+<p>sort 选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-b  忽略行开头的空格，默认情况下，会对整个行进行排序</span><br><span class="line">-f  排序时不区分大小写</span><br><span class="line">-n  基于字符串的长度进行排序而不是基于字母表顺序进行排序</span><br><span class="line">-r  逆序进行排序</span><br><span class="line">-m  将输入的多个参数当作已经排序好的。将多个文件合并为一个排序好的文件，而不执行额外的排序操作</span><br><span class="line">-o  将排序结果输出到文件而不是标准输出</span><br><span class="line">-t  定义字段分隔符，默认情况下是空格或制表符</span><br></pre></td></tr></table></figure>
+
+<h5 id="uniq"><a href="#uniq" class="headerlink" title="uniq"></a>uniq</h5><p>给定一个排序好的文件或标准输入，unip会删除重复的行并将结果输出到标准输出中。</p>
+<p>注意：uniq仅对排序好的文件有用，因为uniq只能移除相邻的重复行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-c  输出重复行列表，并且在重复行的前面加上出现的次数</span><br><span class="line">-d  只输出重复行，不包括单独行</span><br><span class="line">-f n 忽略每行的前n个字段</span><br><span class="line">-i  行与行之间比较时忽略大小写</span><br><span class="line">-s n 忽略每行的前n个字符</span><br><span class="line">-u  仅输出不重复的行，该选项是默认的</span><br></pre></td></tr></table></figure>
+
+<h5 id="cut"><a href="#cut" class="headerlink" title="cut"></a>cut</h5><p>从文本行中提取一段文字并输出至标准输出。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-c char_list   从文本行中提取char_list定义的内容，例，cut -c 7-10 提取每行中的7-10个字符</span><br><span class="line">-f field_list  从文本行中提取field_list定义的一个或多个字段</span><br><span class="line">-d delim_char  使用-f选项后，可使用delim_char作为字段分隔符，默认时以Tab制表符隔开</span><br><span class="line">--complemet  从文本中提取整行，除了那些-c和/或-f指定的部分</span><br></pre></td></tr></table></figure>
+
+<h4 id="paste-合并文本行"><a href="#paste-合并文本行" class="headerlink" title="paste - 合并文本行"></a>paste - 合并文本行</h4><p>example:</p>
+<p><code>paste file1.txt file2.txt</code>：将两个文件中的内容按行拼接起来</p>
+<h4 id="join-连接两个文件中具有相同字段的行"><a href="#join-连接两个文件中具有相同字段的行" class="headerlink" title="join - 连接两个文件中具有相同字段的行"></a>join - 连接两个文件中具有相同字段的行</h4><p>example:</p>
+<p><code>join file1.txt file2.txt</code></p>
+<h4 id="comm-逐行比较两个已排序好的文件"><a href="#comm-逐行比较两个已排序好的文件" class="headerlink" title="comm - 逐行比较两个已排序好的文件"></a>comm - 逐行比较两个已排序好的文件</h4><p>详见<a target="_blank" rel="noopener" href="http://ucasfl.me/2017/06/05/Linux-Command-of-comm/">另一篇博客 - Linux Command of comm</a></p>
+<ul>
+<li>diff - 逐行比较文件</li>
+<li>patch - 对原文件进行 diff 操作</li>
+<li>tr - 替换或删除字符</li>
+<li>sed - 用于文本过滤和转换的流编辑器</li>
+<li>aspell - 交互式拼写检查工具</li>
+</ul>
+<h3 id="Chapter-21-格式化输出"><a href="#Chapter-21-格式化输出" class="headerlink" title="Chapter 21 格式化输出"></a>Chapter 21 格式化输出</h3><h4 id="nl-对行进行标号"><a href="#nl-对行进行标号" class="headerlink" title="nl - 对行进行标号"></a>nl - 对行进行标号</h4><p>example :</p>
+<p><code>nl file.txt</code> : 默认对非空行进行标号。</p>
+<h4 id="fold-设定文本行长度"><a href="#fold-设定文本行长度" class="headerlink" title="fold - 设定文本行长度"></a>fold - 设定文本行长度</h4><p>example :</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">fold -w 15 file.txt  每行设置为15个字符</span><br><span class="line">fold -w 15 -s file.txt 使其断行时考虑单词边界</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>fmt - 简单的文本格式化工具</li>
+<li>pr - 格式化打印文本</li>
+<li>printf - 格式化并打印数据，与C语言中的printf类似。</li>
+</ul>
+<h3 id="Chapter-22-打印"><a href="#Chapter-22-打印" class="headerlink" title="Chapter 22 打印"></a>Chapter 22 打印</h3><ul>
+<li>pr : 转换打印文本，从而进行打印操作</li>
+<li>lpr: 打印文件</li>
+<li>lp: 打印文件</li>
+<li>a2ps: 格式化文件，以在PostScript打印机上打印</li>
+<li>lpstat: 显示打印状态信息</li>
+<li>lpq: 显示打印机队列状态</li>
+<li>lprm: 取消打印任务</li>
+<li>cancel: 取消打印任务</li>
+</ul>
+<h3 id="Chapter-23-编译程序"><a href="#Chapter-23-编译程序" class="headerlink" title="Chapter 23 编译程序"></a>Chapter 23 编译程序</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Reading-Summary/" rel="tag"># Reading-Summary</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/" rel="prev" title="递归实现平衡二叉树的插入、删除、合并和分裂">
+                  <i class="fa fa-chevron-left"></i> 递归实现平衡二叉树的插入、删除、合并和分裂
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2017/07/30/Dynamic-Memory-Management/" rel="next" title="动态存储管理">
+                  动态存储管理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ucasfl</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

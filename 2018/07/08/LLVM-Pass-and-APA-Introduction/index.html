@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="前段时间学习了一些关于 LLVM Pass 和 APA 方面的知识，趁今天有空，做一些总结。 LLVM PassPass 是 LLVM 中一个非常重要的框架，在 LLVM 后端的分析、转化、优化等过程中，通常是多个 Pass 一起作用来共同完成的。 每一个 LLVM Pass 都是 Pass 类的一个派生类，通过重写 Pass 类的虚方法来实现自身的功能。根据你想要实现的功能，你可以选择继承Mod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LLVM Pass 与 APA 简介">
+<meta property="og:url" content="https://ucasfl.github.io/2018/07/08/LLVM-Pass-and-APA-Introduction/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="前段时间学习了一些关于 LLVM Pass 和 APA 方面的知识，趁今天有空，做一些总结。 LLVM PassPass 是 LLVM 中一个非常重要的框架，在 LLVM 后端的分析、转化、优化等过程中，通常是多个 Pass 一起作用来共同完成的。 每一个 LLVM Pass 都是 Pass 类的一个派生类，通过重写 Pass 类的虚方法来实现自身的功能。根据你想要实现的功能，你可以选择继承Mod">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-07-08T05:54:01.000Z">
+<meta property="article:modified_time" content="2021-09-30T08:29:04.107Z">
+<meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="LLVM">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://ucasfl.github.io/2018/07/08/LLVM-Pass-and-APA-Introduction/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2018/07/08/LLVM-Pass-and-APA-Introduction/","path":"2018/07/08/LLVM-Pass-and-APA-Introduction/","title":"LLVM Pass 与 APA 简介"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>LLVM Pass 与 APA 简介 | Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#LLVM-Pass"><span class="nav-number">1.</span> <span class="nav-text">LLVM Pass</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#APA"><span class="nav-number">2.</span> <span class="nav-text">APA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ninja-%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">ninja 安装方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-DSA"><span class="nav-number">4.</span> <span class="nav-text">使用 DSA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8poolalloc"><span class="nav-number">5.</span> <span class="nav-text">使用poolalloc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slide"><span class="nav-number">6.</span> <span class="nav-text">Slide</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="ucasfl"
+      src="/photos/ppp.jpg">
+  <p class="site-author-name" itemprop="name">ucasfl</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2018/07/08/LLVM-Pass-and-APA-Introduction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LLVM Pass 与 APA 简介
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2018-07-08 13:54:01" itemprop="dateCreated datePublished" datetime="2018-07-08T13:54:01+08:00">2018-07-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/LLVM/" itemprop="url" rel="index"><span itemprop="name">LLVM</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>前段时间学习了一些关于 LLVM Pass 和 APA 方面的知识，趁今天有空，做一些总结。</p>
+<h3 id="LLVM-Pass"><a href="#LLVM-Pass" class="headerlink" title="LLVM Pass"></a>LLVM Pass</h3><p>Pass 是 LLVM 中一个非常重要的框架，在 LLVM 后端的分析、转化、优化等过程中，通常是多个 Pass 一起作用来共同完成的。</p>
+<p>每一个 LLVM Pass 都是 <code>Pass</code> 类的一个派生类，通过重写 <code>Pass</code> 类的虚方法来实现自身的功能。根据你想要实现的功能，你可以选择继承<code>ModulePass</code>或<code>FunctionPass</code> 等等一系列Pass.</p>
+<span id="more"></span>
+
+<p>下面实现一个简单的Pass: 该 Pass 的功能就是在 <code>main</code> 函数的入口处添加一个打印 <code>hello, world.\n</code> 的语句。在这儿，我们选择继承 <code>ModulePass</code> 来实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cstdio&gt;</span><br><span class="line">#include &quot;llvm/ADT/Statistic.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Function.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Module.h&quot;</span><br><span class="line">#include &quot;llvm/IR/IRBuilder.h&quot;</span><br><span class="line">#include &quot;llvm/IR/TypeBuilder.h&quot;</span><br><span class="line">#include &quot;llvm/Pass.h&quot;</span><br><span class="line">#include &quot;llvm/Support/raw_ostream.h&quot;</span><br><span class="line">using namespace llvm;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">namespace &#123;</span><br><span class="line">  struct PrintfAfterMain : public ModulePass &#123;</span><br><span class="line">    static char ID; // Pass identification, replacement for typeid</span><br><span class="line">    PrintfAfterMain() : ModulePass(ID) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    virtual bool runOnModule(Module &amp;M) &#123;</span><br><span class="line">		Function *F = M.getFunction(&quot;main&quot;);</span><br><span class="line">		if (!F)&#123;</span><br><span class="line">			errs() &lt;&lt; &quot;Not exist main function.\n&quot;;</span><br><span class="line">			return false;</span><br><span class="line">		&#125;</span><br><span class="line">		Instruction *inst = &amp;(*F-&gt;begin()-&gt;begin());</span><br><span class="line">		IRBuilder&lt;&gt; Builder(inst);</span><br><span class="line">		FunctionType *printf_type = TypeBuilder&lt;int(char *, ...), false&gt;::get(getGlobalContext());</span><br><span class="line">		Function *func = cast&lt;Function&gt;(M.getOrInsertFunction( &quot;printf&quot;, printf_type,</span><br><span class="line">      AttributeSet().addAttribute(M.getContext(), 1U, Attribute::NoAlias)));</span><br><span class="line">		Value *helloWorld = Builder.CreateGlobalStringPtr(&quot;hello world!\n&quot;);</span><br><span class="line">		Builder.CreateCall(func, helloWorld);</span><br><span class="line">		return true;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">char PrintfAfterMain::ID = 0;</span><br><span class="line">static RegisterPass&lt;PrintfAfterMain&gt; X(&quot;PrintfAfterMain&quot;, &quot;PrintfAfterMain World Pass&quot;, false, false);</span><br></pre></td></tr></table></figure>
+<p>我们可以看出，通过重写 <code>ModulePass</code> 的虚函数 <code>runOnModule</code>，只需要几行的代码，便可以实现该功能。简单说一些它的逻辑：在 LLVM 中，每一个 Module 可以看做就代表一个程序，<code>ModulePass</code> 就是对一个 Module 进行操作，一个 Module 维护着一个函数列表，一个 Function 维护有一个 BB 块列表，而一个 BB 块维护有一个指令列表，首先通过 Module 的 <code>getFunction</code> 方法找到 <code>main</code> ，如果没找到，说明模块中不存在 <code>main</code> 函数，这时候不需要对模块进行任何更改，直接返回 <code>false</code> 即可，如果存在 <code>main</code> 函数，那么便可以找到它的第一条指令：<code>&amp;(*F-&gt;begin()-&gt;begin())</code>，然后，通过 <code>IRBuilder.CreateCall</code> 创建一个调用 <code>printf</code> 函数打印 <code>hello, world!\n</code>. </p>
+<p>通过继承 <code>FunctionPass</code> 也可以实现该功能，<code>FunctionPass</code> 作用在每一个函数上，此时，重写 <code>runOnFunction</code> 方法，判断函数为 <code>main</code> 函数，如果不是，则返回，否则，同上进行指令插桩。</p>
+<h3 id="APA"><a href="#APA" class="headerlink" title="APA"></a>APA</h3><p>APA 的全称是 automatic pool allocation，它是 LLVM 后端的一个优化框架，通过将分离的数据结构分配到不同的内存池中，从而控制数据结构在内存中布局。</p>
+<p>编译原理研讨课上本人做了一个关于 APA 的调研，发现网上关于 APA 的资源很少，并且 APA 项目本身不稳定，甚至代码存在一些未修复的 bug，因此将编译安装/使用 APA 的一些步骤记录如下：</p>
+<p>本次实验中使用的是 LLVM 3.3 和 poolalloc r192788</p>
+<ul>
+<li>下载 LLVM 3.3</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">svn co http://llvm.org/svn/llvm-project/llvm/branches/release_33/ llvm3.3</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>下载 clang 3.3 到 llvm3.3/tools</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd llvm3.3/tools/</span><br><span class="line">svn co http://llvm.org/svn/llvm-project/cfe/branches/release_33/ clang</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>由于我在编译 Compiler RT 的时候发生错误，因此这儿不安装 Compiler RT</p>
+</li>
+<li><p>下载 poolalloc 到 llvm3.3/projects</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">svn co http://llvm.org/svn/llvm-project/poolalloc/trunk/ poolalloc</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>将 poolalloc 还原到版本 192788</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">svn update -r 192788</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>修复 poolalloc 192788 中的一些bug, 调用 <code>-poolalloc</code> pass 时发生段错误：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /path/to/poolalloc</span><br><span class="line">vi include/poolalloc/Heuristic.h</span><br></pre></td></tr></table></figure>
+
+<p>为 class Heuristic 添加成员方法 setGraphs:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">void setGraphs(DataStructures ds)&#123;</span><br><span class="line">	Graph = ds;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>PoolAllocate.cpp</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi lib/PoolAllocate/PoolAllocate.cpp</span><br></pre></td></tr></table></figure>
+<p>在 <code>line 1252: CurHeuristic-&gt;getLocalPoolNodes (F, LocalNodes);</code> 前插入<code>CurHeuristic-&gt;setGraphs(Graphs);</code></p>
+<ul>
+<li>使用 ninja 进行编译安装</li>
+</ul>
+<p>在 llvm3.3 同目录下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir build;</span><br><span class="line">cd build;</span><br><span class="line">cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_INSTALL_PREFIX=/opt/llvm3.3 ../llvm3.3</span><br><span class="line">ln -s ../build/compile_commands.json ..</span><br></pre></td></tr></table></figure>
+<p>编译：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ninja</span><br></pre></td></tr></table></figure>
+<p>安装：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ninja install</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看 poolalloc 是否安装成功：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /opt/llvm3.3/lib</span><br><span class="line">find .|grep poolmalloc</span><br></pre></td></tr></table></figure>
+<p>如果能看到poolmalloc的库poolalloc.a、poolalloc.so, 则证明安装成功.</p>
+<h3 id="ninja-安装方法"><a href="#ninja-安装方法" class="headerlink" title="ninja 安装方法"></a>ninja 安装方法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git clone git://github.com/martine/ninja.git</span><br><span class="line">cd ninja</span><br><span class="line">./bootstrap.py</span><br><span class="line">sudo cp ninja /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-DSA"><a href="#使用-DSA" class="headerlink" title="使用 DSA"></a>使用 DSA</h3><p>1)查看与dsa相关的选项</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">opt -load /opt/llvm3.3/lib/LLVMDataStructure.so -load /opt/llvm3.3/lib/poolalloc.so --help|grep dsa</span><br></pre></td></tr></table></figure>
+<p>2)使用dsa(以dsa-local分析为例)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">opt -load /opt/llvm3.3/lib/LLVMDataStructure.so -load /opt/llvm3.3/lib/poolalloc.so -analyze --dsa-local test.ll</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用poolalloc"><a href="#使用poolalloc" class="headerlink" title="使用poolalloc"></a>使用poolalloc</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">clang -emit-llvm -c test.c;</span><br><span class="line">/opt/llvm3.3/bin/opt -load /opt/llvm3.3/lib/LLVMDataStructure.so -load /opt/llvm3.3/lib/poolalloc.so -poolalloc test.o &gt; test.o1;</span><br><span class="line">/opt/llvm3.3/bin/llvm-dis test.o/test.o1;</span><br><span class="line">//查看前后不同：diff test.o.ll test.o1.ll</span><br><span class="line">//生成可执行文件：</span><br><span class="line">llc test.o1.ll;</span><br><span class="line">gcc /opt/llvm3.3/lib/libpoolalloc_rt.a test.o1.s;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Slide"><a href="#Slide" class="headerlink" title="Slide"></a>Slide</h3><p>下面，附上做报告时用的slide:</p>
+<p><a href="/slides/Automatic_Pool_Allocation.pdf">Automatic Pool Allocation</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LLVM/" rel="tag"># LLVM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2018/03/11/Summary-of-Associative-Container-in-C-plus-plus/" rel="prev" title="C++中的关联容器">
+                  <i class="fa fa-chevron-left"></i> C++中的关联容器
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/02/22/CPython-Summary/" rel="next" title="CPython 学习笔记">
+                  CPython 学习笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ucasfl</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

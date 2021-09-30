@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="平衡二叉树平衡二叉树是这样一棵树，要么是一棵空树，要么是满足下面条件的树：  左子树和右子树的深度的绝对值只差不超过 1; 左子树和右子树也是平衡二叉树。  既是二茬排序树又是平衡二叉树的树为平衡二茬排序树。下面说到的平衡二叉树表示平衡二茬排序树。 在平衡二叉树的结构定义中，比二叉树多了一个平衡因子。实现平衡二叉树的插入和删除是一件比较头疼的事情。因为每次插入或删除之后都要检查平衡是否被破坏，如果">
+<meta property="og:type" content="article">
+<meta property="og:title" content="递归实现平衡二叉树的插入、删除、合并和分裂">
+<meta property="og:url" content="https://ucasfl.github.io/2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="平衡二叉树平衡二叉树是这样一棵树，要么是一棵空树，要么是满足下面条件的树：  左子树和右子树的深度的绝对值只差不超过 1; 左子树和右子树也是平衡二叉树。  既是二茬排序树又是平衡二叉树的树为平衡二茬排序树。下面说到的平衡二叉树表示平衡二茬排序树。 在平衡二叉树的结构定义中，比二叉树多了一个平衡因子。实现平衡二叉树的插入和删除是一件比较头疼的事情。因为每次插入或删除之后都要检查平衡是否被破坏，如果">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-06-19T08:39:12.000Z">
+<meta property="article:modified_time" content="2021-09-30T08:29:04.107Z">
+<meta property="article:author" content="ucasfl">
+<meta property="article:tag" content="AVL-Tree">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://ucasfl.github.io/2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/","path":"2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/","title":"递归实现平衡二叉树的插入、删除、合并和分裂"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>递归实现平衡二叉树的插入、删除、合并和分裂 | Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91"><span class="nav-number">1.</span> <span class="nav-text">平衡二叉树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C-%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">C 语言实现：</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="ucasfl"
+      src="/photos/ppp.jpg">
+  <p class="site-author-name" itemprop="name">ucasfl</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/06/19/Using-Recursive-Method-to-Finish-the-Join-Split-of-AVL-Tree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/photos/ppp.jpg">
+      <meta itemprop="name" content="ucasfl">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          递归实现平衡二叉树的插入、删除、合并和分裂
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-06-19 16:39:12" itemprop="dateCreated datePublished" datetime="2017-06-19T16:39:12+08:00">2017-06-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/DataStructures/" itemprop="url" rel="index"><span itemprop="name">DataStructures</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h3 id="平衡二叉树"><a href="#平衡二叉树" class="headerlink" title="平衡二叉树"></a>平衡二叉树</h3><p>平衡二叉树是这样一棵树，要么是一棵空树，要么是满足下面条件的树：</p>
+<ul>
+<li>左子树和右子树的深度的绝对值只差不超过 1;</li>
+<li>左子树和右子树也是平衡二叉树。</li>
+</ul>
+<p>既是二茬排序树又是平衡二叉树的树为平衡二茬排序树。下面说到的平衡二叉树表示平衡二茬排序树。</p>
+<p>在平衡二叉树的结构定义中，比二叉树多了一个平衡因子。实现平衡二叉树的插入和删除是一件比较头疼的事情。因为每次插入或删除之后都要检查平衡是否被破坏，如果被破坏，则要进行各种左旋、右旋的平衡化。</p>
+<span id="more"></span>
+
+<p>除了插入和删除，有的时候还会涉及到将两个平衡二叉树或多个合并成一个平衡二叉树。或者将一个平衡二叉树分裂为两个平衡二叉树，其中一个中的值均小于等于 $x$，另一个的值均大于 $x$ 。对于合并，最常规的方法自然是，将其中一个二叉树中的点一个个插入到另一个平衡二叉树中。然而，这样做的时间复杂度很大，而且其中一棵二叉树被破坏。但是，如果通过递归来做，则可以在不破坏两棵树的前提下创建一棵新的平衡二叉树，并且时间复杂度比前者要优越很多。</p>
+<h3 id="算法"><a href="#算法" class="headerlink" title="算法"></a>算法</h3><p>下面说一下该算法：</p>
+<ol>
+<li>分别中序遍历两棵二叉树，得到两个有序序列。</li>
+<li>将两个有序序列合并为一个有序序列。</li>
+<li>利用该有序序列来创建一棵新的平衡二叉树。</li>
+</ol>
+<p>递归部分：</p>
+<p>终止条件：</p>
+<ul>
+<li>序列中只剩下一个或两个记录，一个时，直接建节点，插入记录；两个时，可建节点，将前者插入，然后再后一个作为前者的右孩子插入。</li>
+</ul>
+<p>递归：</p>
+<ul>
+<li>当序列数大于二时，首先建立节点，将序列最中间的记录插入，然后递归，将中间节点之前的记录作为左孩子插入，中间节点后面的记录作为右孩子插入。</li>
+</ul>
+<p>通过该算法构造出的二叉树一定为平衡二茬排序树：</p>
+<ul>
+<li>每次递归保证了左边的点小于根节点，右边的点大于根节点，因此为排序树。</li>
+<li>递归过程中保证了左右孩子的数目相等或相差一个，这样保证了左右孩子的深度绝对值只差不会超过 1 。</li>
+</ul>
+<p>利用这一个思路，也可进行分裂、插入和删除：</p>
+<ul>
+<li>分裂：中序遍历平衡二叉树得到序列，定位出 $x$ 的位置，利用递归算法和 $x$ 以及之前的序列可构造出一棵二叉树，之后的序列同样构造出一棵二叉树。</li>
+<li>插入：先中序遍历得到序列，将需插入的值插入序列，然后再建树，只是这样相当于重新创建一棵二叉树。</li>
+<li>删除：和插入一样。</li>
+</ul>
+<h3 id="C-语言实现："><a href="#C-语言实现：" class="headerlink" title="C 语言实现："></a>C 语言实现：</h3><p>下面是合并和分裂的 C 语言实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX 100</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MMAX 200</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">BiTreeNode</span>&#123;</span></span><br><span class="line">	<span class="keyword">int</span> number;</span><br><span class="line">	<span class="keyword">int</span> data;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">BiTreeNode</span> *<span class="title">lchild</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">BiTreeNode</span> *<span class="title">rchild</span>;</span></span><br><span class="line">&#125;BiTreeNode, *BiTree;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">join</span><span class="params">(BiTree *T, <span class="keyword">int</span> key[], <span class="keyword">int</span> first, <span class="keyword">int</span> last)</span></span>; <span class="comment">//use a sorted array key[] to create a balanced tree</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">split</span><span class="params">(BiTree T, BiTree *T1, BiTree *T2, <span class="keyword">int</span> x)</span></span>; <span class="comment">//split a balanced tree into two balanced tree</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">inorder</span><span class="params">(BiTree T, <span class="keyword">int</span> key[], <span class="keyword">int</span> *last, <span class="keyword">int</span> restore)</span></span>; <span class="comment">//inorder traverse a balanced tree to get the record list</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">preorder</span><span class="params">(BiTree T)</span></span>; <span class="comment">//preorder traverse a tree</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">get_index_x</span><span class="params">(<span class="keyword">int</span> key[], <span class="keyword">int</span> last, <span class="keyword">int</span> x, <span class="keyword">int</span> *index_x)</span></span>; <span class="comment">//get the index of x in array key</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">merge_array</span><span class="params">(<span class="keyword">int</span> key[], <span class="keyword">int</span> key1[], <span class="keyword">int</span> key2[], <span class="keyword">int</span> len1, <span class="keyword">int</span> len2, <span class="keyword">int</span> *last)</span></span>; <span class="comment">//merge two sorted array into one sorted array</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">merge_tree</span><span class="params">(BiTree *T, BiTree T1, BiTree T2)</span></span>;  <span class="comment">//merge two balanced tree into one balanced tree</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">merge_tree</span><span class="params">(BiTree *T, BiTree T1, BiTree T2)</span></span>&#123; </span><br><span class="line">	<span class="keyword">int</span> key[MMAX], key1[MAX], key2[MAX];</span><br><span class="line">	<span class="keyword">int</span> len1, len2, last;</span><br><span class="line">    <span class="comment">//get lists</span></span><br><span class="line">	inorder(T1, key1, &amp;len1, <span class="number">0</span>);</span><br><span class="line">	inorder(T2, key2, &amp;len2, <span class="number">0</span>);</span><br><span class="line">   <span class="comment">//merge lists</span></span><br><span class="line">	merge_array(key, key1, key2, len1, len2, &amp;last);</span><br><span class="line">	join(T, key, <span class="number">0</span>, last); <span class="comment">//create tree</span></span><br><span class="line">&#125;<span class="comment">//merge_tree</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">merge_array</span><span class="params">(<span class="keyword">int</span> key[], <span class="keyword">int</span> key1[], <span class="keyword">int</span> key2[], <span class="keyword">int</span> len1, <span class="keyword">int</span> len2, <span class="keyword">int</span> *last)</span></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> i, j, k ;</span><br><span class="line">	key[<span class="number">0</span>] = (key1[<span class="number">0</span>] &lt; key2[<span class="number">0</span>])?key1[<span class="number">0</span>]:key2[<span class="number">0</span>];<span class="comment">//get the first value </span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">for</span>(i = <span class="number">0</span>, j = <span class="number">0</span>, k = <span class="number">1</span>; i &lt;= len1 &amp;&amp; j &lt;= len2; )&#123; <span class="comment">//merge lists</span></span><br><span class="line">		<span class="keyword">if</span> (key1[i] &lt; key2[j] )&#123;</span><br><span class="line">			<span class="keyword">if</span> (key1[i] != key[k<span class="number">-1</span>])</span><br><span class="line">			  key[k++] = key1[i++];</span><br><span class="line">			<span class="keyword">else</span></span><br><span class="line">			  i ++;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> (key2[j] != key[k<span class="number">-1</span>])</span><br><span class="line">			  key[k++] = key2[j++];</span><br><span class="line">			<span class="keyword">else</span></span><br><span class="line">			  j ++;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (i &lt;= len1)&#123;  <span class="comment">//merge remain record of key1[]</span></span><br><span class="line">		<span class="keyword">while</span> ( i &lt;= len1 ) &#123;</span><br><span class="line">			key[k++] = key1[i++];</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span>(j &lt;= len2 )&#123; <span class="comment">//merge remain record of key2[]</span></span><br><span class="line">		<span class="keyword">while</span> ( j &lt;= len2 ) &#123;</span><br><span class="line">			key[k++] = key2[j++];</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> ;</span><br><span class="line">	*last = k - <span class="number">1</span>; <span class="comment">//get lenth-1</span></span><br><span class="line">&#125;<span class="comment">//merge_array</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">join</span><span class="params">(BiTree *T, <span class="keyword">int</span> key[], <span class="keyword">int</span> first, <span class="keyword">int</span> last)</span></span>&#123; <span class="comment">//create balanced tree using sorted array</span></span><br><span class="line">	<span class="keyword">if</span>(first == last)&#123;<span class="comment">//left one record</span></span><br><span class="line">		*T = (BiTree) <span class="built_in">malloc</span> (<span class="keyword">sizeof</span>(BiTreeNode));</span><br><span class="line">		(*T)-&gt;data = key[first];</span><br><span class="line">		(*T)-&gt;lchild = (*T)-&gt;rchild = <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span>(first == last - <span class="number">1</span>)&#123;<span class="comment">//left two record</span></span><br><span class="line">		*T = (BiTree) <span class="built_in">malloc</span> (<span class="keyword">sizeof</span>(BiTreeNode));</span><br><span class="line">		(*T)-&gt;data = key[first];</span><br><span class="line">		(*T)-&gt;rchild = (BiTree) <span class="built_in">malloc</span> (<span class="keyword">sizeof</span>(BiTreeNode));</span><br><span class="line">		(*T)-&gt;rchild-&gt;data = key[last];</span><br><span class="line">		(*T)-&gt;lchild = (*T)-&gt;rchild-&gt;lchild = (*T)-&gt;rchild-&gt;rchild = <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span>&#123; <span class="comment">//insert middle record</span></span><br><span class="line">		<span class="keyword">int</span> middle = (first + last) / <span class="number">2</span>;</span><br><span class="line">		*T = (BiTree) <span class="built_in">malloc</span> (<span class="keyword">sizeof</span>(BiTreeNode));</span><br><span class="line">		(*T)-&gt;data = key[middle];</span><br><span class="line">		<span class="comment">//recursive call the join function</span></span><br><span class="line">		join(&amp;((*T)-&gt;lchild), key, first, middle - <span class="number">1</span>);</span><br><span class="line">		join(&amp;((*T)-&gt;rchild), key, middle + <span class="number">1</span>, last);</span><br><span class="line">	&#125;</span><br><span class="line">&#125; <span class="comment">//join</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">split</span><span class="params">(BiTree T, BiTree *T1, BiTree *T2, <span class="keyword">int</span> x)</span></span>&#123; <span class="comment">//split one balanced tree T into two balanced tree T1 and T2</span></span><br><span class="line">	<span class="keyword">int</span> key[MAX];</span><br><span class="line">	<span class="keyword">int</span> last, index_x;</span><br><span class="line">	inorder(T, key, &amp;last, <span class="number">0</span>);<span class="comment">//get sorted list array</span></span><br><span class="line">	<span class="keyword">int</span> get_x = get_index_x(key, last, x, &amp;index_x);<span class="comment">//get the index of x in array key</span></span><br><span class="line">	<span class="keyword">if</span> (get_x)&#123;</span><br><span class="line">		<span class="comment">//call join funcion to create balanced tree</span></span><br><span class="line">		join(T1, key, <span class="number">0</span>, index_x);</span><br><span class="line">		join(T2, key, index_x + <span class="number">1</span>, last);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span>&#123; <span class="comment">//all record &gt; x or &lt;= x, don&#x27;t need split;</span></span><br><span class="line">		*T1 = T;</span><br><span class="line">		*T2 = <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125; <span class="comment">//split</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">get_index_x</span><span class="params">(<span class="keyword">int</span> key[], <span class="keyword">int</span> last, <span class="keyword">int</span> x, <span class="keyword">int</span> *index_x)</span></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> i, j;</span><br><span class="line">	<span class="keyword">for</span> ( i = <span class="number">0</span>; i &lt;= last; i++ ) &#123;</span><br><span class="line">		j = i + <span class="number">1</span>;</span><br><span class="line">		<span class="keyword">if</span>( key[i] &lt;= x &amp;&amp; key[j] &gt; x &amp;&amp;  j &lt;= last )&#123;</span><br><span class="line">			*index_x = i;</span><br><span class="line">			<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;<span class="comment">//get_index</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">inorder</span><span class="params">(BiTree T, <span class="keyword">int</span> key[], <span class="keyword">int</span> *last, <span class="keyword">int</span> restore)</span></span>&#123;</span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">if</span> (!restore)</span><br><span class="line">	  i = <span class="number">0</span>;<span class="comment">//when everytime call the function in main function, restore i to zero</span></span><br><span class="line">	<span class="keyword">if</span>(!T)</span><br><span class="line">	  <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">else</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (inorder(T-&gt;lchild, key, last, ++ restore))&#123;</span><br><span class="line">			key[i++] = T-&gt;data;<span class="comment">//get array list</span></span><br><span class="line">			<span class="keyword">if</span> (inorder(T-&gt;rchild, key, last, ++ restore))&#123;</span><br><span class="line">				*last = i - <span class="number">1</span>;<span class="comment">// get the length-1 of list</span></span><br><span class="line">				<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;<span class="comment">//inorder</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">preorder</span><span class="params">(BiTree T)</span></span>&#123;</span><br><span class="line">	<span class="keyword">if</span>(!T)&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span>&#123;</span><br><span class="line">		<span class="built_in">printf</span>( <span class="string">&quot;%d  &quot;</span>, T-&gt;data );</span><br><span class="line">		<span class="keyword">if</span>(preorder(T-&gt;lchild))</span><br><span class="line">		  <span class="keyword">if</span>(preorder(T-&gt;rchild))</span><br><span class="line">			<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;<span class="comment">//preorder</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">( <span class="keyword">int</span> argc, <span class="keyword">char</span> **argv )</span> </span>&#123;</span><br><span class="line">	<span class="keyword">int</span> key[<span class="number">16</span>];</span><br><span class="line">	<span class="keyword">for</span> ( <span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= <span class="number">16</span>; i++ ) &#123;</span><br><span class="line">		key[i<span class="number">-1</span>] = <span class="number">4</span>*i - <span class="number">3</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	BiTree T;</span><br><span class="line">	join(&amp;T, key, <span class="number">0</span>, <span class="number">15</span>);</span><br><span class="line">	preorder(T);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n\n&quot;</span> );</span><br><span class="line"></span><br><span class="line">	<span class="keyword">int</span> num[<span class="number">40</span>];</span><br><span class="line">	<span class="keyword">for</span> ( <span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">40</span>; i++ ) &#123;</span><br><span class="line">		num[i] = <span class="number">2</span>*i + <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	BiTree T0, T1, T2;</span><br><span class="line">	</span><br><span class="line">	join(&amp;T0, num, <span class="number">0</span>, <span class="number">39</span>);</span><br><span class="line">	preorder(T0);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n\n&quot;</span> );</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">int</span> x;</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;Input x: &quot;</span> );</span><br><span class="line">	<span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;x);</span><br><span class="line">	split(T0, &amp;T1, &amp;T2, x);</span><br><span class="line">	preorder(T1);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n&quot;</span> );</span><br><span class="line">	preorder(T2);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n\n&quot;</span> );</span><br><span class="line"></span><br><span class="line">	<span class="keyword">int</span> key1[<span class="number">10</span>], key2[<span class="number">20</span>];</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i ++)</span><br><span class="line">	  key1[i] = <span class="number">3</span>*i;</span><br><span class="line">	<span class="keyword">for</span> ( <span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">20</span>; i++ ) &#123;</span><br><span class="line">		key2[i] = <span class="number">2</span>*i;</span><br><span class="line">	&#125;</span><br><span class="line">	BiTree t, t1, t2;</span><br><span class="line">	join(&amp;t1, key1, <span class="number">0</span>, <span class="number">9</span>);</span><br><span class="line">	preorder(t1);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n&quot;</span> );</span><br><span class="line">	join(&amp;t2, key2, <span class="number">0</span>, <span class="number">19</span>);</span><br><span class="line">	preorder(t2);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n\n&quot;</span> );</span><br><span class="line">	merge_tree(&amp;t, t1, t2);</span><br><span class="line">	preorder(t);</span><br><span class="line">	<span class="built_in">printf</span>( <span class="string">&quot;\n&quot;</span> );</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AVL-Tree/" rel="tag"># AVL-Tree</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2017/06/05/Linux-Command-of-comm/" rel="prev" title="使用 Comm 比较两个排序好的文件">
+                  <i class="fa fa-chevron-left"></i> 使用 Comm 比较两个排序好的文件
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2017/06/20/Linux-Command-Line-learning-notes-Part3/" rel="next" title="《Linux 命令行大全》学习笔记-Part3">
+                  《Linux 命令行大全》学习笔记-Part3 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ucasfl</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
