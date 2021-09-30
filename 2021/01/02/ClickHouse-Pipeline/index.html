@@ -22,28 +22,28 @@
 <script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
 <meta name="description" content="ClickHouse中，一个query的执行主要分为三个阶段：  Parse阶段：将SQL解析为AST Tree Plan阶段：Plan阶段会先在AST的基础上生成QueryPlan，QueryPlan是由一系列query step构成的Tree，QueryPlan相关代码位于src&#x2F;Processors&#x2F;QueryPlan&#x2F;；构建QueryPlan的最终目的是构建QueryPipeline，Qu">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ClickHouse Pipeline简介Jk">
-<meta property="og:url" content="https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/index.html">
+<meta property="og:title" content="ClickHouse Pipeline简介">
+<meta property="og:url" content="https://ucasfl.github.io/2021/01/02/ClickHouse-Pipeline/index.html">
 <meta property="og:site_name" content="Blog">
 <meta property="og:description" content="ClickHouse中，一个query的执行主要分为三个阶段：  Parse阶段：将SQL解析为AST Tree Plan阶段：Plan阶段会先在AST的基础上生成QueryPlan，QueryPlan是由一系列query step构成的Tree，QueryPlan相关代码位于src&#x2F;Processors&#x2F;QueryPlan&#x2F;；构建QueryPlan的最终目的是构建QueryPipeline，Qu">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/pipeline.png">
-<meta property="article:published_time" content="2017-01-27T10:33:13.000Z">
-<meta property="article:modified_time" content="2021-09-30T13:43:21.217Z">
+<meta property="og:image" content="https://ucasfl.github.io/photos/pipeline/pipeline.png">
+<meta property="article:published_time" content="2021-01-02T10:33:13.000Z">
+<meta property="article:modified_time" content="2021-09-30T13:51:19.456Z">
 <meta property="article:author" content="ucasfl">
 <meta property="article:tag" content="Pipeline">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/pipeline.png">
+<meta name="twitter:image" content="https://ucasfl.github.io/photos/pipeline/pipeline.png">
 
 
-<link rel="canonical" href="https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/">
+<link rel="canonical" href="https://ucasfl.github.io/2021/01/02/ClickHouse-Pipeline/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/","path":"2017/01/27/ClickHouse-Pipeline/","title":"ClickHouse Pipeline简介Jk"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2021/01/02/ClickHouse-Pipeline/","path":"2021/01/02/ClickHouse-Pipeline/","title":"ClickHouse Pipeline简介"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>ClickHouse Pipeline简介Jk | Blog</title>
+<title>ClickHouse Pipeline简介 | Blog</title>
   
 
 
@@ -197,7 +197,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2017/01/27/ClickHouse-Pipeline/">
+    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2021/01/02/ClickHouse-Pipeline/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/photos/ppp.jpg">
@@ -210,7 +210,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          ClickHouse Pipeline简介Jk<a href="https://github.com/user-name/repo-name/tree/branch-name/subdirectory-name/_posts/ClickHouse-Pipeline.md" class="post-edit-link" title="Edit this post" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
+          ClickHouse Pipeline简介<a href="https://github.com/user-name/repo-name/tree/branch-name/subdirectory-name/_posts/ClickHouse-Pipeline.md" class="post-edit-link" title="Edit this post" rel="noopener" target="_blank"><i class="fa fa-pen-nib"></i></a>
         </h1>
 
         <div class="post-meta-container">
@@ -221,7 +221,7 @@
       </span>
       <span class="post-meta-item-text">Posted on</span>
 
-      <time title="Created: 2017-01-27 18:33:13" itemprop="dateCreated datePublished" datetime="2017-01-27T18:33:13+08:00">2017-01-27</time>
+      <time title="Created: 2021-01-02 18:33:13" itemprop="dateCreated datePublished" datetime="2021-01-02T18:33:13+08:00">2021-01-02</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -248,7 +248,9 @@
 <li>Parse阶段：将SQL解析为AST Tree</li>
 <li>Plan阶段：Plan阶段会先在AST的基础上生成QueryPlan，QueryPlan是由一系列query step构成的Tree，QueryPlan相关代码位于<code>src/Processors/QueryPlan/</code>；构建QueryPlan的最终目的是构建QueryPipeline，QueryPipeline由一系列的Transformer(Processor)组装而成，一个Transformer代表一次数据处理，所有Transformer被编排成一个Pipeline，如下图所示。每执行一个Transformer数据就会被加工并输出，一直到下游的Sinker。</li>
 </ul>
-<p><img src="./pipeline.png"></p>
+<span id="more"></span>
+
+<p><img src="/photos/pipeline/pipeline.png"></p>
 <ul>
 <li>Execute阶段：Execute阶段会完成QueryPipeline的执行，PipelineExecutor会根据<code>QueryPipeline</code>中的Transformer生成最终的ExecutingGraph，ExecutingGraph本质上也是由Transformer连接在一起构成的，只是添加了一些调度过程中需要的额外信息。调度时，线程会不停遍历ExecutingGraph，根据Transformer的执行状态进行调度执行，直到所有Transformer都到达<code>Finished</code>状态。相关代码位于<code>src/Processors/Executors/</code>。</li>
 </ul>
@@ -300,13 +302,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2017/01/26/5-Practical-Skills-of-Vim-for-Experienced-Users/" rel="prev" title="5 个针对有经验用户的 Vim 实用技巧">
-                  <i class="fa fa-chevron-left"></i> 5 个针对有经验用户的 Vim 实用技巧
+                <a href="/2019/09/28/Cpp-notes/" rel="prev" title="C++ 笔记">
+                  <i class="fa fa-chevron-left"></i> C++ 笔记
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2017/01/27/3-Vim-Tricks-for-Advanced-Users/" rel="next" title="3 个针对高级用户的 Vim 编辑器实用技巧">
-                  3 个针对高级用户的 Vim 编辑器实用技巧 <i class="fa fa-chevron-right"></i>
+                <a href="/20220/12/25/How-to-implement-UDF-in-ClickHouse/" rel="next" title="如何在ClickHouse中实现UDF">
+                  如何在ClickHouse中实现UDF <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
