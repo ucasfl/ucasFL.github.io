@@ -29,7 +29,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://ucasfl.github.io/photos/pipeline/pipeline.png">
 <meta property="article:published_time" content="2021-01-02T10:33:13.000Z">
-<meta property="article:modified_time" content="2021-09-30T14:00:35.073Z">
+<meta property="article:modified_time" content="2021-09-30T14:03:48.460Z">
 <meta property="article:author" content="ucasfl">
 <meta property="article:tag" content="Pipeline">
 <meta name="twitter:card" content="summary">
@@ -264,11 +264,11 @@
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> table1 <span class="keyword">WHERE</span> id<span class="operator">=</span><span class="number">1</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="type">time</span> LIMIT <span class="number">10</span></span><br></pre></td></tr></table></figure>
 
 <p><code>QueryPipeline</code>会按照以下方式进行编排：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">QueryPipeline::addSimpleTransform(Sourcer)</span><br><span class="line">QueryPipeline::addSimpleTransform(FilterTransform)</span><br><span class="line">QueryPipeline::addSimpleTransform(SortingTransform)</span><br><span class="line">QueryPipeline::addSimpleTransform(LimitByTransform)</span><br><span class="line">QueryPipeline::addSimpleTransform(Sinker)</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">QueryPipeline::<span class="built_in">addSimpleTransform</span>(Sourcer)</span><br><span class="line">QueryPipeline::<span class="built_in">addSimpleTransform</span>(FilterTransform)</span><br><span class="line">QueryPipeline::<span class="built_in">addSimpleTransform</span>(SortingTransform)</span><br><span class="line">QueryPipeline::<span class="built_in">addSimpleTransform</span>(LimitByTransform)</span><br><span class="line">QueryPipeline::<span class="built_in">addSimpleTransform</span>(Sinker)</span><br></pre></td></tr></table></figure>
 
 <p><code>Sourcer</code>只有输出端口，没有输入端口，<code>Sinker</code>只有输入端口，没有输出端口，其他Transformer既有输入端口，也有输出端口。</p>
 <p>此外，还需要在下层构建DAG实现数据的流通关系：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">connect(Sourcer.OutPort, FilterTransform.InPort)</span><br><span class="line">connect(FilterTransform.OutPort, SortingTransform.InPort)</span><br><span class="line">connect(SortingTransform.OutPort, LimitByTransform.InPort)</span><br><span class="line">connect(LimitByTransform.OutPort, Sinker.InPort)</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">connect</span>(Sourcer.OutPort, FilterTransform.InPort)</span><br><span class="line"><span class="built_in">connect</span>(FilterTransform.OutPort, SortingTransform.InPort)</span><br><span class="line"><span class="built_in">connect</span>(SortingTransform.OutPort, LimitByTransform.InPort)</span><br><span class="line"><span class="built_in">connect</span>(LimitByTransform.OutPort, Sinker.InPort)</span><br></pre></td></tr></table></figure>
 
 <p>一个Transformer的<code>OutPort</code>连接到后一个Transformer的<code>InPort</code>，输入端口和输出端口都可能有多个。</p>
 <h2 id="Pipeline调度"><a href="#Pipeline调度" class="headerlink" title="Pipeline调度"></a>Pipeline调度</h2><p>ClickHouse定义了一系列的<code>Transformer</code>状态，根据这些状态来完成<code>Transformer</code>的调度。</p>
