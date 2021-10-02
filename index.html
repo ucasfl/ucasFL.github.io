@@ -547,6 +547,24 @@
 <p>一些比较著名的节点表示学习方法包括DeepWalk[16]、LINE[17]和Node2Vec[18]等。这些节点表示学习方法能够将网络中的节点表示为特征向量，使得该向量能够自带节点信息，例如在特征空间上，相似的节点会离得特别近，从而后续的一些图分析任务比如分类、集群和推荐等能够使用一些机器学习算法来解决。图神经网络同样需要学习节点或图的编码。比如，循环图神经网络旨在通过循环神经网络架构来学习节点表示，该网络假设图中的节点能够持续地与邻居节点交换信息，直到达到稳定平衡点；而卷积图神经网络将卷积操作从网络数据泛化到了图数据上，其主要思想是通过汇总节点自身的特征和邻居节点的特征来学习节点的表示。但与节点表示学习不同的是，图神经网络强调以端到端的方式解决图相关的问题，图神经网络是一组为各种任务设计的神经网络模型，而节点表示学习则是多种方法针对同一任务。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>大规模图数据分析是当前大数据研究领域的一大研究热点。本文中，我们首先介绍了当前大规模图分析分析系统中常见的系统架构、编程（计算）模型和并行模型，进一步对当前一些具有代表性的图分析系统进行了介绍和总结。<br>大规模图数据分析系统的发展目前还较为不成熟，如何高效地处理大图仍然面临着巨大的挑战。此外，将机器学习和深度学习方法应用到图数据分析上来也是当前的一大研究热点，即图表示学习和图神经网络。</p>
 <h3 id="Slides"><a href="#Slides" class="headerlink" title="Slides"></a>Slides</h3><p>报告分享的slides：<a href="/slides/Graph-Systems.pdf">Introduction to Graph Systems</a></p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>[1] Grzegorz Malewicz, Matthew H. Austern, Aart J. C. Bik, James C. Dehnert, Ilan Horn, Naty Leiser, and Grzegorz Czajkowski, Pregel: A System for Large-Scale Graph Processing, SIGMOD’10, June 6–11,2010, Indianapolis, Indiana, USA.<br>[2] Amitabha Roy, Ivo Mihailovic, Willy Zwaenepoel, X-Stream: Edge-centric Graph Processing using Streaming Partitions, SOSP ’13, Nov 03-06 2013, Farmington, PA, USA</p>
+<p>[3] Julian Shun,Guy E. Blelloch, Ligra: A Lightweight Graph Processing Framework for Shared Memory, PPoPP’13, February 23–27, 2013, Shenzhen.</p>
+<p>[4] Carlos H. C. Teixeira ∗ , Alexandre J. Fonseca, Marco Serafini,Georgos Siganos, Mohammed J. Zaki, Ashraf Aboulnaga, Arabesque: A System for Distributed Graph Mining, SOSP’15, October 4–7, 2015, Monterey, CA, USA.</p>
+<p>[5] Joseph E. Gonzalez,Yucheng Low,Haijie Gu,Danny Bickson,Carlos Guestrin, PowerGraph: Distributed Graph-Parallel Computation on Natural Graphs, OSDI ’12</p>
+<p>[6] Xiaowei Zhu, Wenguang Chen, Weimin Zheng, and Xiaosong Ma, Gemini: A Computation-Centric Distributed Graph Processing System, OSDI’16</p>
+<p>[7] Aapo Kyrola, Guy Blelloch, Guy Blelloch, GraphChi: Large-Scale Graph Computation on Just a PC, OSDI’12</p>
+<p>[8] Xiaowei Zhu, Wentao Han, and Wenguang Chen, GridGraph: Large-Scale Graph Processing on a Single Machine Using 2-Level Hierarchical Partitioning, USENIX ATC ’15</p>
+<p>[9] Narayanan Sundaram, Nadathur Satish, Md Mostofa Ali Patwary, Subramanya R Dulloor,Michael J. Anderson, Satya Gautam Vadlamudi, Dipankar Das and Pradeep Dubey, GraphMat: High performance graph analytics madeproductive, Proceedings of the VLDB Endowment, Vol. 8, No. 11</p>
+<p>[10] Da Zheng, Disa Mhembere, Randal Burns,Joshua Vogelstein,Carey E. Priebe,Alexander S. Szalay, FlashGraph: Processing Billion-Node Graphs on an Array of Commodity SSDs, FAST ’15</p>
+<p>[11] Hang Liu,H. Howie Huang, Graphene: Fine-Grained IO Management for Graph Computing, FAST’17</p>
+<p>[12] Keval Vora, L UMOS : Dependency-Driven Disk-based Graph Processing, ATC2019</p>
+<p>[13] Kai Wang,Zhiqiang Zuo,John Thorpe,Tien Quang Nguyen,Guoqing Harry Xu, RStream: Marrying Relational Algebra with Streaming for Efficient Graph Mining on A Single Machine, OSDI’18</p>
+<p>[14] Daniel Mawhirter,Bo Wu, AutoMine: Harmonizing High-Level Abstraction and High Performance for Graph Mining, SOSP ’19, October 27–30, 2019, Huntsville, ON, Canada</p>
+<p>[15] Yanfeng Zhang, Qixin Gao, Lixin Gao, Cuirong Wang, Maiter: An Asynchronous Graph Processing Framework for Delta-based Accumulative Iterative Computation,</p>
+<p>[16] B. Perozzi, R. Al-Rfou, and S. Skiena, “Deepwalk: Online learning of social representations,” in Proceedings of the 20th ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2014, pp. 701–710.</p>
+<p>[17] J. Tang, M. Qu, M. Wang, M. Zhang, J. Yan, and Q. Mei, “Line: Large-scale information network embedding,” in Proceedings of the 24th international conference on world wide web. International World Wide Web Conferences Steering Committee, 2015, pp. 1067–1077.</p>
+<p>[18] A. Grover and J. Leskovec, “node2vec: Scalable feature learning for networks,” in Proceedings of the 22nd ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2016, pp. 855–864.</p>
+<p>[19] Z. Wu, S. Pan, F. Chen, G. Long, C. Zhang, and P. S. Yu, “A comprehensive survey on graph neural networks,” arXiv preprint arXiv:1901.00596, 2019.</p>
 
       
     </div>
