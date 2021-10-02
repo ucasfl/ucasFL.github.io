@@ -28,7 +28,7 @@
 <meta property="og:description" content="注：本文为论文阅读课程报告 背景大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。首先对图（Graph）进行一个简单的定义：一个图G&#x3D;（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-06-07T13:09:42.000Z">
-<meta property="article:modified_time" content="2021-10-02T13:23:39.770Z">
+<meta property="article:modified_time" content="2021-10-02T13:24:06.806Z">
 <meta property="article:author" content="ucasfl">
 <meta property="article:tag" content="Graph Systems">
 <meta name="twitter:card" content="summary">
@@ -243,6 +243,8 @@
     <div class="post-body" itemprop="articleBody">
         <p><strong>注：本文为论文阅读课程报告</strong></p>
 <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。首先对图（Graph）进行一个简单的定义：一个图G=（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际应用中，顶点和边可以都是相同的类型（分别），也可以包含许多不同的类型，同时，顶点和边都可以包含许多不同的属性。因此，通过关系包含属性这一利器，图结构模型可以更方便地用来建模大量具有复杂关系的数据。</p>
+<span id="more"></span>
+
 <p>图分析是通过存储、分析、综合和处理图数据来解决复杂问题的一个计算机领域，其擅长挖掘人、物、实体之间的关联关系，拥有广泛的应用场景，如社交网络分析、知识图谱、物流调度和推荐系统等。在本文中，我们所介绍的图分析系统主要用于解决两类图分析问题：图计算和图挖掘。图计算问题通常可以通过线性代数进行建模表示，将图建模成一个邻接矩阵，同时将每一个顶点的状态表示成一个向量，比如PageRank是一个典型的图计算问题，其基于稀疏矩阵和向量乘的迭代来进行计算，除此之外，单源点最短路径(SSSP)、连通组件和中介中心度等也是一些非常典型的图计算问题。而图挖掘问题则与图计算问题有较大区别，图挖掘问题旨在从一个图中挖掘出一些复杂的结构，而非进行值计算，比如频繁子图挖掘、counting motifs和clique挖掘等。</p>
 <p>现实世界中的图通常非常大（上亿节点，上百亿条边），需要进行的查询分析也非常复杂；此外，由于图数据的非结构化特性，使得图数据访问局部性差，并行复杂。因此，开发设计一个高性能、可扩展、易用性强的图分析框架/系统成为了当前系统研究者的一大研究热点。</p>
 <p>近些年来，在学术界和工业界中已经涌现出了一大批图编程框架，如Pregel[1]、Ligra[3]、GraphChi[7]、Gemini[6]、X-Stream[2]和Arabesque[4]等。从系统架构上来说，这些编程框架有的是分布式框架，如Pregel和Gemini等；有的是基于共享内存的单机图系统，如Ligra等；也有基于磁盘的单机图计算系统，如GraphChi和X-Stream等。从编程模型来说，大量的图计算系统都使用了vertex-centric的编程模型，如Pregel、GraphLab和PowerGraph[5]等；同时，也有一些图编程框架采用了edge-centric的编程模型，比如X-Stream；另外一些图系统采用了点边混合计算的编程模型，如Ligra和Gemini；其次，由于vertex-centric和edge-centric等编程模型无法适用于图挖掘问题，因此一些图挖掘系统采用了embedding-centric的编程模型，比如Arabesque；另外，一些基于磁盘或SSD的图系统采用了一些其它的编程模式，比如Graphene采用了IO-request-centric的编程模型。从并行模型上来说，整体同步并行计算模型（简称BSP）是图分析系统中最常见的并行模型，比如Pregel、Ligra、X-Stream和Arabesque等许多系统都采用了该并行模型；同时，一些图系统采用了异步并行模型（简称AP），如GraphLab和Maiter；另外，延迟同步并行模型（简称SSP）也是一种可采纳的方案，特别是适合于机器学习中的图分析问题。</p>
