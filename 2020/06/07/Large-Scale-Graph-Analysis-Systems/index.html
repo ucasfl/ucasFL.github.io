@@ -1,250 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 5.4.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
-
-<script class="next-config" data-name="main" type="application/json">{"hostname":"ucasfl.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="注：本文为论文阅读课程报告 背景大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。首先对图（Graph）进行一个简单的定义：一个图G&#x3D;（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际">
+  <meta charset="utf-8">
+  
+  <title>Large-Scale-Graph-Analysis-Systems | Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="背景大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="大规模图数据分析系统">
+<meta property="og:title" content="Large-Scale-Graph-Analysis-Systems">
 <meta property="og:url" content="https://ucasfl.github.io/2020/06/07/Large-Scale-Graph-Analysis-Systems/index.html">
 <meta property="og:site_name" content="Blog">
-<meta property="og:description" content="注：本文为论文阅读课程报告 背景大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。首先对图（Graph）进行一个简单的定义：一个图G&#x3D;（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际">
+<meta property="og:description" content="背景大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-06-07T13:09:42.000Z">
-<meta property="article:modified_time" content="2021-10-02T13:26:07.000Z">
-<meta property="article:author" content="ucasfl">
+<meta property="article:modified_time" content="2023-02-11T14:53:23.807Z">
+<meta property="article:author" content="flynn">
 <meta property="article:tag" content="Graph Systems">
 <meta name="twitter:card" content="summary">
-
-
-<link rel="canonical" href="https://ucasfl.github.io/2020/06/07/Large-Scale-Graph-Analysis-Systems/">
-
-
-
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://ucasfl.github.io/2020/06/07/Large-Scale-Graph-Analysis-Systems/","path":"2020/06/07/Large-Scale-Graph-Analysis-Systems/","title":"大规模图数据分析系统"}</script>
-
-<script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>大规模图数据分析系统 | Blog</title>
+  
+    <link rel="alternate" href="/atom.xml" title="Blog" type="application/atom+xml">
+  
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
   
 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" integrity="sha384-XdYbMnZ/QjLh6iI4ogqCTaIjrFk87ip+ekIjefZch0Y+PvJ8CDYtEs1ipDmPorQ+" crossorigin="anonymous">
 
+  
+<link rel="stylesheet" href="/css/styles.css">
 
-  <noscript>
-    <link rel="stylesheet" href="/css/noscript.css">
-  </noscript>
-</head>
+  
 
-<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
-  <div class="headband"></div>
+<meta name="generator" content="Hexo 5.4.0"></head>
 
-  <main class="main">
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar" role="button">
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
+<body>
+  <nav class="navbar navbar-inverse">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-menu-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      
     </div>
-  </div>
 
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <i class="logo-line"></i>
-      <h1 class="site-title">Blog</h1>
-      <i class="logo-line"></i>
-    </a>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger">
-    </div>
-  </div>
-</div>
-
-
-
-<nav class="site-nav">
-  <ul class="main-menu menu">
-        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
-        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
-        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
-        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
-  </ul>
-</nav>
-
-
-
-
-</div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="main-menu-navbar">
+      <ul class="nav navbar-nav">
         
-  
-  <div class="toggle sidebar-toggle" role="button">
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
-  </div>
-
-  <aside class="sidebar">
-
-    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
-      <ul class="sidebar-nav">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
+          <li><a class=""
+                 href="/index.html">Home</a></li>
+        
+          <li><a class=""
+                 href="/archives/">Archives</a></li>
+        
+          <li><a class=""
+                 href="/about/">About</a></li>
+        
+          <li><a class=""
+                 target="_blank" rel="noopener" href="https://github.com/ucasfl">GitHub</a></li>
+        
       </ul>
 
-      <div class="sidebar-panel-container">
-        <!--noindex-->
-        <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">编程模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Vertex-Centric"><span class="nav-number">2.1.</span> <span class="nav-text">Vertex-Centric</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Edge-Centric"><span class="nav-number">2.2.</span> <span class="nav-text">Edge-Centric</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%82%B9%E3%80%81%E8%BE%B9%E6%B7%B7%E5%90%88%E8%AE%A1%E7%AE%97"><span class="nav-number">2.3.</span> <span class="nav-text">点、边混合计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Embedding-Centric"><span class="nav-number">2.4.</span> <span class="nav-text">Embedding-Centric</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">系统架构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E6%9E%B6%E6%9E%84"><span class="nav-number">3.1.</span> <span class="nav-text">分布式架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E6%9C%BA%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E6%9E%B6%E6%9E%84"><span class="nav-number">3.2.</span> <span class="nav-text">单机共享内存架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E6%9C%BAout-of-core%E6%9E%B6%E6%9E%84"><span class="nav-number">3.3.</span> <span class="nav-text">单机out-of-core架构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B6%E8%A1%8C%E6%A8%A1%E5%BC%8F"><span class="nav-number">4.</span> <span class="nav-text">并行模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BSP%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.1.</span> <span class="nav-text">BSP模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AP%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.2.</span> <span class="nav-text">AP模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SSP%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.3.</span> <span class="nav-text">SSP模型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BE%E5%88%86%E6%9E%90%E7%B3%BB%E7%BB%9F"><span class="nav-number">5.</span> <span class="nav-text">图分析系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Pregel"><span class="nav-number">5.1.</span> <span class="nav-text">Pregel</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GraphLab"><span class="nav-number">5.2.</span> <span class="nav-text">GraphLab</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PowerGraph"><span class="nav-number">5.3.</span> <span class="nav-text">PowerGraph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GraphChi"><span class="nav-number">5.4.</span> <span class="nav-text">GraphChi</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#X-Stream"><span class="nav-number">5.5.</span> <span class="nav-text">X-Stream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Ligra"><span class="nav-number">5.6.</span> <span class="nav-text">Ligra</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Gemini"><span class="nav-number">5.7.</span> <span class="nav-text">Gemini</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GridGraph"><span class="nav-number">5.8.</span> <span class="nav-text">GridGraph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GraphMat"><span class="nav-number">5.9.</span> <span class="nav-text">GraphMat</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FlashGraph"><span class="nav-number">5.10.</span> <span class="nav-text">FlashGraph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Graphene"><span class="nav-number">5.11.</span> <span class="nav-text">Graphene</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LUMOS"><span class="nav-number">5.12.</span> <span class="nav-text">LUMOS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Arabesque"><span class="nav-number">5.13.</span> <span class="nav-text">Arabesque</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RStream"><span class="nav-number">5.14.</span> <span class="nav-text">RStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AutoMine"><span class="nav-number">5.15.</span> <span class="nav-text">AutoMine</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Maiter"><span class="nav-number">5.16.</span> <span class="nav-text">Maiter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E8%A1%A8%E7%A4%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">5.17.</span> <span class="nav-text">图表示学习与图神经网络</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slides"><span class="nav-number">7.</span> <span class="nav-text">Slides</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">8.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
-        </div>
-        <!--/noindex-->
+      <!--
+      <ul class="nav navbar-nav navbar-right">
+        
+          <li><a href="/atom.xml" title="RSS Feed"><i class="fa fa-rss"></i></a></li>
+        
+      </ul>
+      -->
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
 
-        <div class="site-overview-wrap sidebar-panel">
-          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="ucasfl"
-      src="/photos/ppp.jpg">
-  <p class="site-author-name" itemprop="name">ucasfl</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap site-overview-item animated">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-        <a href="/archives/">
-          <span class="site-state-item-count">28</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-          <a href="/categories/">
-        <span class="site-state-item-count">9</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-          <a href="/tags/">
-        <span class="site-state-item-count">20</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author site-overview-item animated">
-      <span class="links-of-author-item">
-        <a href="https://github.com/ucasfl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ucasfl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:fenglv97@gmail.com" title="E-Mail → mailto:fenglv97@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
-      </span>
-  </div>
-  <div class="cc-license site-overview-item animated" itemprop="license">
-    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
-  </div>
-
-
-
-        </div>
-      </div>
-    </div>
-  </aside>
-  <div class="sidebar-dimmer"></div>
-
-
-    </header>
-
-    
-  <div class="back-to-top" role="button" aria-label="Back to top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-<noscript>
-  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
-</noscript>
-
-
-    <div class="main-inner post posts-expand">
-
-
-  
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://ucasfl.github.io/2020/06/07/Large-Scale-Graph-Analysis-Systems/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/photos/ppp.jpg">
-      <meta itemprop="name" content="ucasfl">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          大规模图数据分析系统
-        </h1>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2020-06-07 21:09:42" itemprop="dateCreated datePublished" datetime="2020-06-07T21:09:42+08:00">2020-06-07</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">In</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Sharing/" itemprop="url" rel="index"><span itemprop="name">Sharing</span></a>
-        </span>
-    </span>
-
+  <div class="container">
+    <div class="blog-header">
+  <h1 class="blog-title">Blog</h1>
   
 </div>
 
-        </div>
-      </header>
+    <div class="row">
+        <div class="col-sm-8 blog-main">
+          <article id="post-Large-Scale-Graph-Analysis-Systems" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+    
+  
+    <h1 class="article-title" itemprop="name">
+      Large-Scale-Graph-Analysis-Systems
+    </h1>
+  
+
+
+  </header>
+
+  <div class="article-meta">
+    <div class="article-datetime">
+  <a href="/2020/06/07/Large-Scale-Graph-Analysis-Systems/" class="article-date"><time datetime="2020-06-07T13:09:42.000Z" itemprop="datePublished">2020-06-07</time></a>
+</div>
 
     
     
-    
-    <div class="post-body" itemprop="articleBody">
-        <p><strong>注：本文为论文阅读课程报告</strong></p>
-<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。首先对图（Graph）进行一个简单的定义：一个图G=（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际应用中，顶点和边可以都是相同的类型（分别），也可以包含许多不同的类型，同时，顶点和边都可以包含许多不同的属性。因此，通过关系包含属性这一利器，图结构模型可以更方便地用来建模大量具有复杂关系的数据。</p>
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Sharing/">Sharing</a>
+  </div>
+
+
+  </div>
+  <div class="article-inner">
+
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>大规模图数据分析是当前的一大研究热点。随着大数据时代的到来，在人们日常生活中、工业界和学术界产生的数据越来越复杂，传统的关系型数据模型和欧几里得数据模型难以用来描述和建模许多具有复杂关系的实体和对象，而图结构模型则恰好能够弥补这一弊端。</p>
 <span id="more"></span>
 
+<p>首先对图（Graph）进行一个简单的定义：一个图G=（V, E）是一个二元组，其中V为顶点集，E为边集，边表示顶点之间的关系。在实际应用中，顶点和边可以都是相同的类型（分别），也可以包含许多不同的类型，同时，顶点和边都可以包含许多不同的属性。因此，通过关系包含属性这一利器，图结构模型可以更方便地用来建模大量具有复杂关系的数据。</p>
 <p>图分析是通过存储、分析、综合和处理图数据来解决复杂问题的一个计算机领域，其擅长挖掘人、物、实体之间的关联关系，拥有广泛的应用场景，如社交网络分析、知识图谱、物流调度和推荐系统等。在本文中，我们所介绍的图分析系统主要用于解决两类图分析问题：图计算和图挖掘。图计算问题通常可以通过线性代数进行建模表示，将图建模成一个邻接矩阵，同时将每一个顶点的状态表示成一个向量，比如PageRank是一个典型的图计算问题，其基于稀疏矩阵和向量乘的迭代来进行计算，除此之外，单源点最短路径(SSSP)、连通组件和中介中心度等也是一些非常典型的图计算问题。而图挖掘问题则与图计算问题有较大区别，图挖掘问题旨在从一个图中挖掘出一些复杂的结构，而非进行值计算，比如频繁子图挖掘、counting motifs和clique挖掘等。</p>
 <p>现实世界中的图通常非常大（上亿节点，上百亿条边），需要进行的查询分析也非常复杂；此外，由于图数据的非结构化特性，使得图数据访问局部性差，并行复杂。因此，开发设计一个高性能、可扩展、易用性强的图分析框架/系统成为了当前系统研究者的一大研究热点。</p>
 <p>近些年来，在学术界和工业界中已经涌现出了一大批图编程框架，如Pregel[1]、Ligra[3]、GraphChi[7]、Gemini[6]、X-Stream[2]和Arabesque[4]等。从系统架构上来说，这些编程框架有的是分布式框架，如Pregel和Gemini等；有的是基于共享内存的单机图系统，如Ligra等；也有基于磁盘的单机图计算系统，如GraphChi和X-Stream等。从编程模型来说，大量的图计算系统都使用了vertex-centric的编程模型，如Pregel、GraphLab和PowerGraph[5]等；同时，也有一些图编程框架采用了edge-centric的编程模型，比如X-Stream；另外一些图系统采用了点边混合计算的编程模型，如Ligra和Gemini；其次，由于vertex-centric和edge-centric等编程模型无法适用于图挖掘问题，因此一些图挖掘系统采用了embedding-centric的编程模型，比如Arabesque；另外，一些基于磁盘或SSD的图系统采用了一些其它的编程模式，比如Graphene采用了IO-request-centric的编程模型。从并行模型上来说，整体同步并行计算模型（简称BSP）是图分析系统中最常见的并行模型，比如Pregel、Ligra、X-Stream和Arabesque等许多系统都采用了该并行模型；同时，一些图系统采用了异步并行模型（简称AP），如GraphLab和Maiter；另外，延迟同步并行模型（简称SSP）也是一种可采纳的方案，特别是适合于机器学习中的图分析问题。</p>
@@ -323,81 +199,135 @@
 <p>[18] A. Grover and J. Leskovec, “node2vec: Scalable feature learning for networks,” in Proceedings of the 22nd ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2016, pp. 855–864.</p>
 <p>[19] Z. Wu, S. Pan, F. Chen, G. Long, C. Zhang, and P. S. Yu, “A comprehensive survey on graph neural networks,” arXiv preprint arXiv:1901.00596, 2019.</p>
 
+      
     </div>
 
     
+      
+
     
-    
 
-    <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/Graph-Systems/" rel="tag"># Graph Systems</a>
-          </div>
+    <footer class="article-footer">
+      <a data-url="https://ucasfl.github.io/2020/06/07/Large-Scale-Graph-Analysis-Systems/" data-id="cle03qzgs0007v5p0boi089va" class="article-share-link">
+        <i class="fa fa-share"></i> Share
+      </a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a></li></ul>
 
-        
 
-          <div class="post-nav">
-            <div class="post-nav-item">
-                <a href="/2019/09/28/Cpp-notes/" rel="prev" title="C++ 笔记">
-                  <i class="fa fa-chevron-left"></i> C++ 笔记
-                </a>
-            </div>
-            <div class="post-nav-item">
-                <a href="/2020/12/25/How-to-implement-UDF-in-ClickHouse/" rel="next" title="如何在ClickHouse中实现UDF">
-                  如何在ClickHouse中实现UDF <i class="fa fa-chevron-right"></i>
-                </a>
-            </div>
-          </div>
     </footer>
-  </article>
-</div>
+  </div>
+  
+    
+<ul id="article-nav" class="nav nav-pills nav-justified">
+  
+  <li role="presentation">
+    <a href="/2018/07/08/Introduction-to-LLVM-Pass-and-APA/" id="article-nav-older" class="article-nav-link-wrap">
+      <i class="fa fa-chevron-left pull-left"></i>
+      <span class="article-nav-link-title">Introduction-To-LLVM-Pass-and-APA</span>
+    </a>
+  </li>
+  
+  
+  <li role="presentation">
+    <a href="/2020/12/25/How-to-Implement-User-define-functions-in-ClickHouse/" id="article-nav-newer" class="article-nav-link-wrap">
+      <span class="article-nav-link-title">How to Implement User-define-functions in ClickHouse</span>
+      <i class="fa fa-chevron-right pull-right"></i>
+    </a>
+  </li>
+  
+</ul>
+
+
+  
+</article>
 
 
 
 
-
-
-</div>
-  </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-
-
-<div class="copyright">
-  &copy; 2016 – 
-  <span itemprop="copyrightYear">2023</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">ucasfl</span>
-</div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+        </div>
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          
+  
+  <div class="sidebar-module">
+    <h4>Recents</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/2023/02/03/2022-Summarize/">2022-Summarize</a>
+        </li>
+      
+        <li>
+          <a href="/2020/12/25/How-to-Implement-User-define-functions-in-ClickHouse/">How to Implement User-define-functions in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/06/07/Large-Scale-Graph-Analysis-Systems/">Large-Scale-Graph-Analysis-Systems</a>
+        </li>
+      
+        <li>
+          <a href="/2018/07/08/Introduction-to-LLVM-Pass-and-APA/">Introduction-To-LLVM-Pass-and-APA</a>
+        </li>
+      
+    </ul>
   </div>
 
+
+  
+  <div class="sidebar-module">
+    <h4>Archives</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/02/">February 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/12/">December 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/06/">June 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2018/07/">July 2018</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Categories</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/LLVM/">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Sharing/">Sharing</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Summarize/">Summarize</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Tags</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/LLVM/" rel="tag">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Summarize/" rel="tag">Summarize</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Udf/" rel="tag">Udf</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+
+        </div>
     </div>
-  </footer>
-
-  
-  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
-<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
-
-  
-
-
-
-
-
-  
-
-
-
+  </div>
+  <footer class="blog-footer">
+  <div class="container">
+    <div id="footer-info" class="inner">
+      &copy; 2023 flynn<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
 
   
 
-  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":"all","tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
-<script src="/js/third-party/math/mathjax.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js" integrity="sha384-8gBf6Y4YYq7Jx97PIqmTwLPin4hxIzQw5aDmUg/DDhul9fFpbbLcLh3nTIIDJKhx" crossorigin="anonymous"></script>
 
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
 
 
 </body>
