@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   
-  <title>How to Implement User-define-functions in ClickHouse | Blog Website</title>
+  <title>How to Implement User-defined-functions in ClickHouse | Blog Website</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="在数据库中，通常有三类不同的函数：  UDF：用户自定义函数 UDAF：用户自定义聚合函数 UDTF：用户自定义表函数">
 <meta property="og:type" content="article">
-<meta property="og:title" content="How to Implement User-define-functions in ClickHouse">
-<meta property="og:url" content="https://ucasfl.github.io/2020/12/25/How-to-Implement-User-define-functions-in-ClickHouse/index.html">
+<meta property="og:title" content="How to Implement User-defined-functions in ClickHouse">
+<meta property="og:url" content="https://ucasfl.github.io/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/index.html">
 <meta property="og:site_name" content="Blog Website">
 <meta property="og:description" content="在数据库中，通常有三类不同的函数：  UDF：用户自定义函数 UDAF：用户自定义聚合函数 UDTF：用户自定义表函数">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-12-25T10:33:13.000Z">
-<meta property="article:modified_time" content="2023-02-12T04:30:59.822Z">
+<meta property="article:modified_time" content="2023-02-12T10:54:26.267Z">
 <meta property="article:author" content="flynn">
-<meta property="article:tag" content="Udf">
 <meta property="article:tag" content="ClickHouse">
+<meta property="article:tag" content="Udf">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Blog Website" type="application/atom+xml">
@@ -90,13 +90,13 @@
 
     <div class="row">
         <div class="col-sm-8 blog-main">
-          <article id="post-How-to-Implement-User-define-functions-in-ClickHouse" class="article article-type-post" itemscope itemprop="blogPost">
+          <article id="post-How-to-Implement-User-defined-functions-in-ClickHouse" class="article article-type-post" itemscope itemprop="blogPost">
 
   <header class="article-header">
     
   
     <h1 class="article-title" itemprop="name">
-      How to Implement User-define-functions in ClickHouse
+      How to Implement User-defined-functions in ClickHouse
     </h1>
   
 
@@ -105,7 +105,7 @@
 
   <div class="article-meta">
     <div class="article-datetime">
-  <a href="/2020/12/25/How-to-Implement-User-define-functions-in-ClickHouse/" class="article-date"><time datetime="2020-12-25T10:33:13.000Z" itemprop="datePublished">2020-12-25</time></a>
+  <a href="/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/" class="article-date"><time datetime="2020-12-25T10:33:13.000Z" itemprop="datePublished">2020-12-25</time></a>
 </div>
 
     
@@ -303,8 +303,8 @@
   
   
   <li role="presentation">
-    <a href="/2023/02/03/2022-Summarize/" id="article-nav-newer" class="article-nav-link-wrap">
-      <span class="article-nav-link-title">2022-Summarize</span>
+    <a href="/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/" id="article-nav-newer" class="article-nav-link-wrap">
+      <span class="article-nav-link-title">How Vectorization Execution Implemented in ClickHouse</span>
       <i class="fa fa-chevron-right pull-right"></i>
     </a>
   </li>
@@ -331,7 +331,11 @@
         </li>
       
         <li>
-          <a href="/2020/12/25/How-to-Implement-User-define-functions-in-ClickHouse/">How to Implement User-define-functions in ClickHouse</a>
+          <a href="/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/">How Vectorization Execution Implemented in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/">How to Implement User-defined-functions in ClickHouse</a>
         </li>
       
         <li>
@@ -349,7 +353,7 @@
   
   <div class="sidebar-module">
     <h4>Archives</h4>
-    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/02/">February 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/12/">December 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/06/">June 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2018/07/">July 2018</a><span class="sidebar-module-list-count">1</span></li></ul>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/02/">February 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2022/09/">September 2022</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/12/">December 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/06/">June 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2018/07/">July 2018</a><span class="sidebar-module-list-count">1</span></li></ul>
   </div>
 
 
@@ -357,7 +361,7 @@
   
   <div class="sidebar-module">
     <h4>Categories</h4>
-    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Graph-Systems/">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/LLVM/">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Summarize/">Summarize</a><span class="sidebar-module-list-count">1</span></li></ul>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Graph-Systems/">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/LLVM/">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Summarize/">Summarize</a><span class="sidebar-module-list-count">1</span></li></ul>
   </div>
 
 
@@ -365,7 +369,7 @@
   
   <div class="sidebar-module">
     <h4>Tags</h4>
-    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/LLVM/" rel="tag">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Summarize/" rel="tag">Summarize</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Udf/" rel="tag">Udf</a><span class="sidebar-module-list-count">1</span></li></ul>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/LLVM/" rel="tag">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pipeline/" rel="tag">Pipeline</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Summarize/" rel="tag">Summarize</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Udf/" rel="tag">Udf</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Vectorization/" rel="tag">Vectorization</a><span class="sidebar-module-list-count">1</span></li></ul>
   </div>
 
 

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>How Vectorization Execution Implemented in ClickHouse | Blog Website</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="ClickHouse 是一个性能卓越的 OLAP 计算引擎，自开源以来，受到了业内的广泛青睐。而 ClickHouse 极致性能背后的关键因素是真正的列式存储和极致性能的向量化执行引擎。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How Vectorization Execution Implemented in ClickHouse">
+<meta property="og:url" content="https://ucasfl.github.io/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/index.html">
+<meta property="og:site_name" content="Blog Website">
+<meta property="og:description" content="ClickHouse 是一个性能卓越的 OLAP 计算引擎，自开源以来，受到了业内的广泛青睐。而 ClickHouse 极致性能背后的关键因素是真正的列式存储和极致性能的向量化执行引擎。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/vector-op.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/simd.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/sse.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/not-simd.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/cc.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/vol.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/pipeline-run.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/sql.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/pipeline.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/sql-pipeline.svg">
+<meta property="og:image" content="https://ucasfl.github.io/photos/vectorization/expand.svg">
+<meta property="article:published_time" content="2022-09-21T10:57:18.000Z">
+<meta property="article:modified_time" content="2023-02-12T13:31:17.469Z">
+<meta property="article:author" content="flynn">
+<meta property="article:tag" content="Vectorization">
+<meta property="article:tag" content="Pipeline">
+<meta property="article:tag" content="ClickHouse">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ucasfl.github.io/photos/vectorization/vector-op.svg">
+  
+    <link rel="alternate" href="/atom.xml" title="Blog Website" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/photos/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" integrity="sha384-XdYbMnZ/QjLh6iI4ogqCTaIjrFk87ip+ekIjefZch0Y+PvJ8CDYtEs1ipDmPorQ+" crossorigin="anonymous">
+
+  
+<link rel="stylesheet" href="/css/styles.css">
+
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-inverse">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-menu-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="main-menu-navbar">
+      <ul class="nav navbar-nav">
+        
+          <li><a class=""
+                 href="/index.html">Home</a></li>
+        
+          <li><a class=""
+                 href="/archives/">Archives</a></li>
+        
+          <li><a class=""
+                 href="/about/">About</a></li>
+        
+          <li><a class=""
+                 target="_blank" rel="noopener" href="https://github.com/ucasfl">GitHub</a></li>
+        
+      </ul>
+
+      <!--
+      <ul class="nav navbar-nav navbar-right">
+        
+          <li><a href="/atom.xml" title="RSS Feed"><i class="fa fa-rss"></i></a></li>
+        
+      </ul>
+      -->
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+  <div class="container">
+    <div class="blog-header">
+  <h1 class="blog-title">Blog Website</h1>
+  
+</div>
+
+    <div class="row">
+        <div class="col-sm-8 blog-main">
+          <article id="post-How-Vectorization-Execution-Implemented-in-ClickHouse" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+    
+  
+    <h1 class="article-title" itemprop="name">
+      How Vectorization Execution Implemented in ClickHouse
+    </h1>
+  
+
+
+  </header>
+
+  <div class="article-meta">
+    <div class="article-datetime">
+  <a href="/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/" class="article-date"><time datetime="2022-09-21T10:57:18.000Z" itemprop="datePublished">2022-09-21</time></a>
+</div>
+
+    
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ClickHouse/">ClickHouse</a>
+  </div>
+
+
+  </div>
+  <div class="article-inner">
+
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>ClickHouse 是一个性能卓越的 OLAP 计算引擎，自开源以来，受到了业内的广泛青睐。而 ClickHouse 极致性能背后的关键因素是<strong>真正的列式存储</strong>和<strong>极致性能的向量化执行引擎</strong>。</p>
+<span id="more"></span>
+
+<h1 id="向量化简介"><a href="#向量化简介" class="headerlink" title="向量化简介"></a>向量化简介</h1><h2 id="什么是向量化"><a href="#什么是向量化" class="headerlink" title="什么是向量化"></a>什么是向量化</h2><p>向量化是提升 OLAP 查询性能的一种常用技术。向量化是指对不同的数据执行同样的一个或一批指令，或者说把指令应用于一个数组/向量，通过 CPU 数据并行，实现单指令、多数据（简称 SIMD）。</p>
+<p>通俗地说，对一个数组进行连续操作，即可看作向量化：</p>
+<p><img src="/photos/vectorization/vector-op.svg"></p>
+<p>从 CPU 流水线角度来看，向量化能够充分填满 CPU 的计算单元，其本质是采用一个控制器来控制多个处理器，同时对一组数据中的每一条执行相同的操作，实现空间上的并行：</p>
+<ul>
+<li>单指令流：同时只能执行一种操作；</li>
+<li>多数据流：在一组同构（向量）的数据上进行操作；</li>
+</ul>
+<p><img src="/photos/vectorization/simd.svg"></p>
+<p>向量化依赖于 CPU 提供的硬件支持，例如，Intel CPU 提供了一系列的 SSE、AXV 扩展向量化指令集，在 Linux 命令行执行 <code>cat /proc/cpuinfo</code>，其输出包含如下内容：</p>
+<p><img src="/photos/vectorization/sse.svg"></p>
+<p>其中，sse*，avx* 即为该 CPU 支持的向量化指令集。</p>
+<h2 id="向量化的局限"><a href="#向量化的局限" class="headerlink" title="向量化的局限"></a>向量化的局限</h2><p>向量化不是十全十美的，其主要被用来优化可并行计算的简单场景，以及可能被频繁调用的基础逻辑，并非所有场景都适合于向量化。在严重依赖于控制流，即包含大量分支、跳转和条件判断语句的任务中，则难以实现向量化。</p>
+<p>例如，向量化不能以不同的方式来处理不同的数据：</p>
+<p><img src="/photos/vectorization/not-simd.svg"></p>
+<h2 id="如何实现向量化"><a href="#如何实现向量化" class="headerlink" title="如何实现向量化"></a>如何实现向量化</h2><p>在程序中实现向量化的方式多种多样，包括：</p>
+<ul>
+<li>嵌入式汇编：直接在程序中嵌入向量化汇编指令</li>
+<li>使用 Intel 提供的 <a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html">SIMD 内置函数</a></li>
+<li>通过 <a target="_blank" rel="noopener" href="https://www.opencilk.org/">Cilk</a> 库提供的 <code>for</code> 循环</li>
+<li>通过编译器制导语句，如 <code>#pragma simd</code></li>
+<li>编译器自动向量化</li>
+<li>使用高性能库，如 <a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/ipp.html">IPP</a> 和 <a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/develop/documentation/get-started-with-mkl-for-dpcpp/top.html">MKL</a></li>
+</ul>
+<p>在上述方式中，从上往下，易用性越高，可控性越低。其中，自动向量化和内置函数在<strong>通用性</strong>和<strong>易用性</strong>方面更好，因此也是 OLAP 系统使用最为广泛的两种向量化技术。</p>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>例如，使用 SSE <code>__mm_add_ps</code> 内置函数，一次实现 8 个单精度浮点数的加法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	__m128 v0 = _mm_set_ps(<span class="number">1.0f</span>, <span class="number">2.0f</span>, <span class="number">3.0f</span>, <span class="number">4.0f</span>);</span><br><span class="line">	__m128 v1 = _mm_set_ps(<span class="number">1.0f</span>, <span class="number">2.0f</span>, <span class="number">3.0f</span>, <span class="number">4.0f</span>);</span><br><span class="line">	__m128 v2 = _mm_add_ps(v0, v1);</span><br><span class="line">	<span class="keyword">float</span> result[<span class="number">4</span>];</span><br><span class="line">	_mm_storeu_ps(result, v2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上述代码中，首先通过 <code>_mm_set_ps</code> 函数创建两个包含 4 个浮点数的 128 位向量，之后，通过 <code>_mm_add_ps</code> 来完成两个向量的加法，通过三条向量化指令，即完成了 8 个浮点数的相加。</p>
+<p>另外，对于向量化友好的代码，经过编译器编译后，能够自动使用向量化指令进行优化：</p>
+<p><img src="/photos/vectorization/cc.svg"></p>
+<p>上述数组求和的代码经过编译器编译优化后生成的汇编代码如上图右半部分所示，其中使用了大量的向量化指令，<code>xmm</code> 系列寄存器均为 128 位。</p>
+<h1 id="ClickHouse-向量化执行"><a href="#ClickHouse-向量化执行" class="headerlink" title="ClickHouse 向量化执行"></a>ClickHouse 向量化执行</h1><p>在 ClickHouse 中，向量化的实现主要通过 <strong>SIMD 内置函数</strong>和<strong>编译器自动向量化</strong>：</p>
+<ul>
+<li>大量使用 SIMD 内置函数对关键代码路径进行优化</li>
+<li>通过良好的架构设计和代码设计，使得编译器能够生成良好的向量化代码。<strong>关键：基于 Pipeline 的执行引擎设计，能够按列对数据进行处理。</strong></li>
+</ul>
+<h2 id="SIMD内置函数"><a href="#SIMD内置函数" class="headerlink" title="SIMD内置函数"></a>SIMD内置函数</h2><p>在 ClickHouse 中，<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/issues/37005">大量使用了 SIMD 内置函数</a>，来对关键代码路径进行优化。</p>
+<p>例如，在 ClickHouse 底层，过滤器（Filter）是一个预分配空间、无符号 8 位整型数的数组，用于表示 <code>WHERE</code> 和 <code>HAVING</code> 子句的条件及真值，每一位的值为 0 或者 1，表示条件为假或者真。</p>
+<p>下面的代码计算 Filter 中 1 的个数，当环境支持 <code>SSE2</code> 指令，并且硬件支持 <code>POPCNT</code> 指令时，会通过向量化指令一次将 64 字节压缩成一个 64 位的无符号数，然后通过 <code>__builtin_popcountll</code> 指令计算出 64 位无符号数中包含的1的个数。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">size_t</span> <span class="title">countBytesInFilter</span><span class="params">(<span class="keyword">const</span> UInt8 * filt, <span class="keyword">size_t</span> sz)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">size_t</span> count = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">const</span> Int8 * pos = <span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> Int8 *&gt;(filt);</span><br><span class="line">	<span class="keyword">const</span> Int8 * end = pos + sz;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(__SSE2__) &amp;&amp; defined(__POPCNT__)</span></span><br><span class="line">	<span class="keyword">const</span> Int8 * end64 = pos + sz / <span class="number">64</span> * <span class="number">64</span>;</span><br><span class="line">	<span class="keyword">for</span> (; pos &lt; end64; pos += <span class="number">64</span>)</span><br><span class="line">		count += __builtin_popcountll(<span class="built_in">toBits64</span>(pos));</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	<span class="keyword">for</span> (; pos &lt; end; ++pos)</span><br><span class="line">		count += *pos != <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">return</span> count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>toBits64</code> 函数完成 64 字节数到 64 位无符号数的压缩操作，其中使用到的 SIMD 内置函数包括：</p>
+<ul>
+<li><code>_mm_setzero_si128()</code> ：初始化 128 位（16 字节）的全 0 位图；</li>
+<li> <code>_mm_loadu_si128(mem_addr)</code> ：从内存地址 mem_addr 处加载 128 位的整型数据；</li>
+<li> <code>_mm_cmpgt_epi8(a, b)</code> ：按 8 位比较 a 和 b 两个 128 位整型数，若 a 的对应 8 位比 b 的对应 8 位大，则填充对应位为全 1，否则填充全 0；</li>
+<li> <code>_mm_movemask_epi8(a)</code> ：根据 128 位整型数 a 的每个 8 位组的最高位创建掩码，一共 16 位长，返回 int 结果（高 16 位用 0 填充）。</li>
+</ul>
+<p>在该函数中，每调用一次内置函数能够处理 16 字节的数据，刚好 128 位，从而实现向量化计算。由于 SSE 指令集中没有真正的位运算指令，所以压缩的过程略显繁琐，但仍然比逐个遍历判断效率要高很多。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> UInt64 <span class="title">toBits64</span><span class="params">(<span class="keyword">const</span> Int8 * bytes64)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> __m128i zero16 = _mm_setzero_si128();</span><br><span class="line">    UInt64 res =</span><br><span class="line">        <span class="keyword">static_cast</span>&lt;UInt64&gt;(_mm_movemask_epi8(_mm_cmpeq_epi8(</span><br><span class="line">		    _mm_loadu_si128(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> __m128i *&gt;(bytes64)), zero16)))</span><br><span class="line">        | (<span class="keyword">static_cast</span>&lt;UInt64&gt;(_mm_movemask_epi8(_mm_cmpeq_epi8(</span><br><span class="line">		    _mm_loadu_si128(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> __m128i *&gt;(bytes64 + <span class="number">16</span>)), zero16))) &lt;&lt; <span class="number">16</span>)</span><br><span class="line">        | (<span class="keyword">static_cast</span>&lt;UInt64&gt;(_mm_movemask_epi8(_mm_cmpeq_epi8(</span><br><span class="line">		    _mm_loadu_si128(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> __m128i *&gt;(bytes64 + <span class="number">32</span>)), zero16))) &lt;&lt; <span class="number">32</span>)</span><br><span class="line">        | (<span class="keyword">static_cast</span>&lt;UInt64&gt;(_mm_movemask_epi8(_mm_cmpeq_epi8(</span><br><span class="line">		    _mm_loadu_si128(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> __m128i *&gt;(bytes64 + <span class="number">48</span>)), zero16))) &lt;&lt; <span class="number">48</span>);</span><br><span class="line">    <span class="keyword">return</span> ~res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="编译器自动向量化"><a href="#编译器自动向量化" class="headerlink" title="编译器自动向量化"></a>编译器自动向量化</h2><p>编译器自动向量化是 ClickHouse 中实现向量化的最主要的方式，其关键是基于 Pipeline 的执行引擎，能够按列对数据进行处理。关于 Pipeline 执行引擎，会在下一节进行介绍。</p>
+<p>在实现自动向量化时，ClickHouse 也通过许多方式对代码进行优化，从而提高向量化能力：</p>
+<ul>
+<li>代码设计中大量使用模板（template），对数据的类型和长度进行分派（dispatch）：<strong>消除分支跳转语句</strong>；</li>
+<li>大量使用内联函数：<strong>消除函数调用</strong>；</li>
+<li>减少虚函数调用</li>
+</ul>
+<p>下面，我们来看ClickHouse中 <code>plus</code> 这一个UDF的实现，该函数作用在两个列中，按位置完成两列数据的相加，例如，当我们输入SQL  <code>SELECT a + b FROM t;</code> 时，会被转换成 <code>SELECT plus(a, b) FROM t;</code>，从而通过这一UDF来完成计算。</p>
+<p>下面的代码是 <code>plus</code> 函数真正执行计算的代码，可以看出，<code>process</code> 函数的实现代码是非常完美的向量化优化代码：通过使用模板对类型和长度进行分派，在执行时，数组的类型和长度已知，没有任何分支跳转语句，同时 <code>apply</code> 函数已经被内联，因此不会发生函数调用。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> A, <span class="keyword">typename</span> B, <span class="keyword">typename</span> Op, <span class="keyword">typename</span> OpResultType = <span class="keyword">typename</span> Op::ResultType&gt;</span><br><span class="line">struct BinaryOperation</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> ResultType = OpResultType;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">constexpr</span> <span class="keyword">bool</span> allow_fixed_string = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;OpCase op_case&gt;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> NO_INLINE <span class="title">process</span><span class="params">(<span class="keyword">const</span> A * __restrict a, <span class="keyword">const</span> B * __restrict b, ResultType * __restrict c, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span> <span class="params">(op_case == OpCase::Vector)</span></span></span><br><span class="line"><span class="function">                c[i] </span>= Op::<span class="keyword">template</span> apply&lt;ResultType&gt;(a[i], b[i]);</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in"><span class="keyword">constexpr</span></span> (op_case == OpCase::LeftConstant)</span><br><span class="line">                c[i] = Op::<span class="keyword">template</span> apply&lt;ResultType&gt;(*a, b[i]);</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                c[i] = Op::<span class="keyword">template</span> apply&lt;ResultType&gt;(a[i], *b);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> ResultType <span class="title">process</span><span class="params">(A a, B b)</span> </span>&#123; <span class="keyword">return</span> Op::<span class="keyword">template</span> apply&lt;ResultType&gt;(a, b); &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Result = ResultType&gt;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> NO_SANITIZE_UNDEFINED Result <span class="built_in">apply</span>(A a, B b)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/// Next everywhere, static_cast - so that there is no wrong result in expressions of the form Int64 c = UInt32(a) * Int32(-1).</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in"><span class="keyword">constexpr</span></span> (is_big_int_v&lt;A&gt; || is_big_int_v&lt;B&gt;)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">using</span> CastA = std::<span class="keyword">conditional_t</span>&lt;std::is_floating_point_v&lt;B&gt;, B, A&gt;;</span><br><span class="line">        <span class="keyword">using</span> CastB = std::<span class="keyword">conditional_t</span>&lt;std::is_floating_point_v&lt;A&gt;, A, B&gt;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;Result&gt;(<span class="keyword">static_cast</span>&lt;CastA&gt;(a)) + <span class="keyword">static_cast</span>&lt;Result&gt;(<span class="keyword">static_cast</span>&lt;CastB&gt;(b));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;Result&gt;(a) + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外，值得一提的是  <code>__restrict</code>  修饰符，该关键字的含义是向编译器表明，在该指针的生命周期内，只有该指针本身或直接由它产生的指针能够用来访问该指针指向的对象，其作用是限制指针别名，从而帮助编译器进行优化。在ClickHouse中，有很多地方都使用到了该关键字，在 <a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/9304">PR9304</a> 中，通过该关键字，使查询的整体性能提升从 5% 到 200% 不等。</p>
+<p>在C++中，<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/17043">消除虚函数调用也是提高向量化的一个重要手段</a> 为例。在ClickHouse中，聚合函数能够把数据聚合到中间状态，聚合函数的接口类实现了  <code>addBatch</code>  方法，其会通过一个  <code>for</code>  循环调用  <code>add</code>  方法将一批数据聚合到中间状态，派生类需要实现  <code>add</code>  方法，这导致了虚函数的调用，无法实现  <code>for</code>  循环的向量化执行，通过消除  <code>countIf</code>  聚合函数的  <code>addBatch</code>  方法对  <code>add</code>  方法的虚函数调用，从而实现向量化执行，性能得到数倍提升。</p>
+<h1 id="Pipeline-执行引擎"><a href="#Pipeline-执行引擎" class="headerlink" title="Pipeline 执行引擎"></a>Pipeline 执行引擎</h1><p>Pipeline 执行引擎是 ClickHouse 实现向量化的关键。</p>
+<h2 id="传统火山模型-vs-Pipeline-模型"><a href="#传统火山模型-vs-Pipeline-模型" class="headerlink" title="传统火山模型 vs Pipeline 模型"></a>传统火山模型 vs Pipeline 模型</h2><p>在传统火山模型中，SQL 查询在数据库中经过解析，会生成一个查询树，查询树的每个节点为代数运算符（Operator）。火山模型把 Operator 看成迭代器，每个迭代器都会提供一个 <code>next()</code> 接口，该接口会递归调用子节点的 <code>next()</code> 接口获取一行数据，即一个 tuple，对这行数据进行特定处理，然后返回处理后的 tuple。</p>
+<p>对于这样 Tupl-at-a-time 的处理逻辑，其优点是<strong>处理逻辑清晰、简单</strong>，缺点是<strong>以行为单位处理数据，CPU Cache 不友好，每获取一行数据都会涉及到大量的虚函数调用开销，CPU 利用率不高，无法发挥向量化能力</strong>。</p>
+<p><img src="/photos/vectorization/vol.svg"></p>
+<p>Pipeline 执行模型以 Block 为单位，按列对数据进行处理，易于实现向量化。ClickHouse 在执行过程中，数据按列（数组）的方式组织在内存中，查询执行的相关操作和函数都是基于向量进行调度执行，而不是在单个值上进行调用，提高了 CPU 缓存利用率，利于 CPU 的自动向量化编译优化。</p>
+<p><img src="/photos/vectorization/pipeline-run.svg"></p>
+<h2 id="Pipeline-执行引擎实现"><a href="#Pipeline-执行引擎实现" class="headerlink" title="Pipeline 执行引擎实现"></a>Pipeline 执行引擎实现</h2><p>在介绍 Pipeline 执行引擎实现之前，先简单看一下在 ClickHouse 中 SQL 的执行流程。</p>
+<p>当一个 SQL 查询语句提交到 ClickHouse 中以后，首先会经过 Parser 解析成一棵抽象语法树（AST）。之后，Interpreter 会对 AST 进行一系列改写和优化，比如在逻辑相等时，<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/17041">将 <code>sumIf</code> 函数改写为性能更优的 <code>countIf</code> 函数</a>，然后生成 QueryPlan，QueryPlan 是由 QueryStep 构成的一个树（除 Join 外，实际退化为链表），可近似将 QueryPlan 看成是物理执行计划，在 QueryPlan 的基础上，能够进行 Pipeline级别的优化。最后，基于优化后的 QueryPlan 创建 QueryPipeline，由 Executor 完成 QueryPipeline 的调度执行。</p>
+<p>QueryPipeline 即为本节所说的 Pipeline。</p>
+<p><img src="/photos/vectorization/sql.svg"></p>
+<h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>Pipeline 的基本结构是一个有向无环图，如下图所示。其中，节点是 Processor，边是一对连通的端口，上一个 Processor 的输出端口连接到下一个 Processor 的输入端口。</p>
+<ul>
+<li>Processor：Pipeline 的基本构建块，对数据进行处理的单元，例如过滤、排序、聚合等；</li>
+<li>Port：连接 Processor，实现数据在 Pipeline 之间的流通，能够保存一个 Block 的数据。</li>
+</ul>
+<p><img src="/photos/vectorization/pipeline.svg"></p>
+<p>一个 Processor可能有 0 个或多个输入端口，以及 0 个或多个输出端口，其中，Source 和 Sink 是两类特殊的 Processor，Source 只有一个输出端口，没有输入端口，Sink 只有一个输入端口，没有输出端口。在 Pipeline 执行时，Processor 会从输入端口拉取数据，对数据进行处理，然后推到输出端口</p>
+<p>下面，我们以一个具体的例子来看 ClickHouse 中 Pipeline 的结构是什么样的，例如，对于 SQL：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="built_in">avg</span>(length(URL)) <span class="operator">+</span> <span class="number">1</span> <span class="keyword">FROM</span> hits <span class="keyword">WHERE</span> URL <span class="operator">!=</span> <span class="string">&#x27;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>其对应的 Pipeline 如下图所示：</p>
+<p><img src="/photos/vectorization/sql-pipeline.svg"></p>
+<p>一个完整的 Pipeline 总是从 Source 开始，到 Sink 结束，在该 Pipeline 中，Read 对数据进行读取，之后 Filter 对数据进行过滤，Expression 进行表达式计算…，直到最后处理完成的数据输出到 Sink。</p>
+<h3 id="调度执行"><a href="#调度执行" class="headerlink" title="调度执行"></a>调度执行</h3><p>业内常见的数据库计算模式如传统火山模型是基于算子间函数调用链来完成 SQL 计算的，预先分配线程与算子调用链进行绑定，如下图左侧所示，在执行过程中数据流与控制流绑定，无法灵活调整不同算子的并发，遇到阻塞事件也无法让出执行资源。</p>
+<p>ClickHouse Pipeline 将数据流与控制流分离，所有执行线程归属于独立线程池，每个 Processor 可独立运行。执行过程中，Executor 将选出当前可执行的 Processor 进入待执行队列，由线程池中的工作线程进行运算处理。不仅 Processor 间是异步调度的，对资源依赖型 Processor（如  IO，RPC  等），其内部运行过程同样支持异步调度。当这类 Processor 的执行过程中遇到其依赖资源未就绪时，将转变为异步状态，中断当前执行并加入到异步等待队列中。Executor 在收集可执行 Processor 的过程中，同时将对异步等待队列中所有  Processor 进行  Epoll  轮询，把就绪的 Processor 转变为可执行状态，加入到待执行队列中。</p>
+<h3 id="动态扩展"><a href="#动态扩展" class="headerlink" title="动态扩展"></a>动态扩展</h3><p>ClickHouse Pipeline 具有极高的灵活性，能够在执行的过程中进行动态更改，创建新的 Processor，例如聚合的执行。</p>
+<p>在 ClickHouse 中，聚合（Aggregating）的执行分为两个阶段：</p>
+<ul>
+<li> consume 阶段：并行从所有输入流读取数据并预聚合到中间状态；</li>
+<li> generate 阶段：合并预聚合的数据生成最终的聚合结果。</li>
+</ul>
+<p>下图是 Aggregating 的执行示意图，左边为进行预聚合的 consume 阶段，右边为生成最终结果的 generate 阶段。在 consume 阶段，每一个 AggregatingTransform 不停从对应的输入流中拉取数据，预聚合到中间状态并写入对应的哈希表中；最后一个消费完输入流的 AggregatingTransform 会负责 Pipeline 的动态更改，其会创建一个新的 Processor：ConvertAggregatedToChunks，该 Processor 会从前面写入预聚合数据的所有哈希表中读取数据，并进行合并（Merge），生成最终的聚合结果。</p>
+<p><img src="/photos/vectorization/expand.svg"></p>
+<h3 id="表达式执行"><a href="#表达式执行" class="headerlink" title="表达式执行"></a>表达式执行</h3><p>表达式求值是 ClickHouse Pipeline 中的一个重要组成部分，ClickHouse 通过 ActionsDAG 来实现表达式计算。</p>
+<p>ActionsDAG 是一个由表达式构成的有向无环图，其中的节点有下面几种类型：</p>
+<ul>
+<li>INPUT：输入列</li>
+<li>COLUMN：常量列</li>
+<li>ALIAS：列的别名</li>
+<li>ARRAY_JOIN：arrayJoin 函数</li>
+<li>FUNCTION：其他普通函数</li>
+</ul>
+<p>ActionsDAG 的边表示的是节点表达式之间的依赖推导关系。基于 DAG，方便对 Action 进行优化，例如：</p>
+<ul>
+<li>删除不需要的表达式</li>
+<li>字表达式编译</li>
+<li>节点拆分或合并</li>
+</ul>
+<p>ActionsDAG 在执行时，会首先进行拓扑排序，得到表达式执行的序列，然后该表达式序列作用到 Block 上，实现按列进行计算。</p>
+<p>ActionsDAG 相比 Greenplum，Doris，MySQL，PostgreSQL 等数据库具有一个核心优势：复用中间结果。对于 <code>SELECT (a + b) * c,  (a + b) / c FROM t;</code> 这样一个查询，ActionsDAG 可以做到只对 <code>a + b</code> 求值一次。其他数据库无法复用结果的原因是使用树状结构进行表达式求值，实现简单但不灵活，ActionsDAG 通过 DAG 结构对表达式进行血缘推导，能够实现子节点复用。</p>
+<h2 id="在-ClickHouse-中查看执行-Pipeline-和-ActionsDAG"><a href="#在-ClickHouse-中查看执行-Pipeline-和-ActionsDAG" class="headerlink" title="在 ClickHouse 中查看执行 Pipeline 和 ActionsDAG"></a>在 ClickHouse 中查看执行 Pipeline 和 ActionsDAG</h2><p>在 ClickHouse 中，可以使用 <code>EXPLAIN</code> 查询来查看一个 SQL 对应的执行 Pipeline 和 ActionsDAG。</p>
+<p>例如，对于前面的查询：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="built_in">avg</span>(length(URL)) <span class="operator">+</span> <span class="number">1</span> <span class="keyword">FROM</span> hits <span class="keyword">WHERE</span> URL <span class="operator">!=</span> <span class="string">&#x27;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>在 ClickHouse 客户端通过 <code>EXPLAIN</code> 查询来查看对应的执行 Pipeline：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN PIPELINE</span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">avg</span>(length(URL)) <span class="operator">+</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">FROM</span> hits</span><br><span class="line"><span class="keyword">WHERE</span> URL <span class="operator">!=</span> <span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">Query id: d0844f55<span class="operator">-</span>fe5b<span class="number">-4030</span><span class="operator">-</span>a762<span class="number">-402</span>b4f5c843e</span><br><span class="line"></span><br><span class="line">┌─explain──────────────────────────────────┐</span><br><span class="line">│ (Expression)                             │</span><br><span class="line">│ ExpressionTransform                      │</span><br><span class="line">│   (Aggregating)                          │</span><br><span class="line">│   Resize <span class="number">32</span> → <span class="number">1</span>                          │</span><br><span class="line">│     AggregatingTransform × <span class="number">32</span>            │</span><br><span class="line">│       StrictResize <span class="number">32</span> → <span class="number">32</span>               │</span><br><span class="line">│         (Expression)                     │</span><br><span class="line">│         ExpressionTransform × <span class="number">32</span>         │</span><br><span class="line">│           (<span class="keyword">Filter</span>)                       │</span><br><span class="line">│           FilterTransform × <span class="number">32</span>           │</span><br><span class="line">│             (SettingQuotaAndLimits)      │</span><br><span class="line">│               (ReadFromMergeTree)        │</span><br><span class="line">│               MergeTreeThread × <span class="number">32</span> <span class="number">0</span> → <span class="number">1</span> │</span><br><span class="line">└──────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line"><span class="number">13</span> <span class="keyword">rows</span> <span class="keyword">in</span> set. Elapsed: <span class="number">0.005</span> sec.</span><br></pre></td></tr></table></figure>
+<p>可以看到，在该查询的 Pipeline 中，最开始是从磁盘扫描数据的 ReadFromMergeTree，并行度为 32；之后是 FilterTransform -&gt; ExpressionTransform -&gt; AggregatingTransform，聚合完成之后，所有流合并成为一个流，并行度从 32 变为 1，完成最后的 ExpressionTransform。</p>
+<p>下面，通过 <code>EXPLAIN</code> 来查看 ActionsDAG：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN actions <span class="operator">=</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">avg</span>(length(URL)) <span class="operator">+</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">FROM</span> hits</span><br><span class="line"><span class="keyword">WHERE</span> URL <span class="operator">!=</span> <span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">Query id: <span class="number">6</span>cae6628<span class="number">-8e14</span><span class="number">-4661</span><span class="operator">-</span>a86d<span class="number">-7e94</span>aff31322</span><br><span class="line"></span><br><span class="line">┌─explain────────────────────────────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ Expression ((Projection <span class="operator">+</span> Before <span class="keyword">ORDER</span> <span class="keyword">BY</span>))                                                    │</span><br><span class="line">│ Actions: INPUT : <span class="number">0</span> <span class="operator">-</span><span class="operator">&gt;</span> <span class="built_in">avg</span>(length(URL)) Float64 : <span class="number">0</span>                                             │</span><br><span class="line">│          <span class="keyword">COLUMN</span> Const(UInt8) <span class="operator">-</span><span class="operator">&gt;</span> <span class="number">1</span> UInt8 : <span class="number">1</span>                                                    │</span><br><span class="line">│          <span class="keyword">FUNCTION</span> plus(<span class="built_in">avg</span>(length(URL)) :: <span class="number">0</span>, <span class="number">1</span> :: <span class="number">1</span>) <span class="operator">-</span><span class="operator">&gt;</span> plus(<span class="built_in">avg</span>(length(URL)), <span class="number">1</span>) Float64 : <span class="number">2</span> │</span><br><span class="line">│ Positions: <span class="number">2</span>                                                                                   │</span><br><span class="line">│   Aggregating                                                                                  │</span><br><span class="line">│   Keys:                                                                                        │</span><br><span class="line">│   Aggregates:                                                                                  │</span><br><span class="line">│       <span class="built_in">avg</span>(length(URL))                                                                         │</span><br><span class="line">│         <span class="keyword">Function</span>: <span class="built_in">avg</span>(UInt64) → Float64                                                        │</span><br><span class="line">│         Arguments: length(URL)                                                                 │</span><br><span class="line">│         Argument positions: <span class="number">0</span>                                                                  │</span><br><span class="line">│     Expression (Before <span class="keyword">GROUP</span> <span class="keyword">BY</span>)                                                               │</span><br><span class="line">│     Actions: INPUT : <span class="number">0</span> <span class="operator">-</span><span class="operator">&gt;</span> URL String : <span class="number">0</span>                                                       │</span><br><span class="line">│              <span class="keyword">FUNCTION</span> length(URL :: <span class="number">0</span>) <span class="operator">-</span><span class="operator">&gt;</span> length(URL) UInt64 : <span class="number">1</span>                               │</span><br><span class="line">│     Positions: <span class="number">1</span>                                                                               │</span><br><span class="line">│       <span class="keyword">Filter</span> (<span class="keyword">WHERE</span>)                                                                           │</span><br><span class="line">│       <span class="keyword">Filter</span> <span class="keyword">column</span>: notEquals(URL, <span class="string">&#x27;&#x27;</span>) (removed)                                              │</span><br><span class="line">│       Actions: INPUT : <span class="number">0</span> <span class="operator">-</span><span class="operator">&gt;</span> URL String : <span class="number">0</span>                                                     │</span><br><span class="line">│                <span class="keyword">COLUMN</span> Const(String) <span class="operator">-</span><span class="operator">&gt;</span> <span class="string">&#x27;&#x27;</span> String : <span class="number">1</span>                                           │</span><br><span class="line">│                <span class="keyword">FUNCTION</span> notEquals(URL : <span class="number">0</span>, <span class="string">&#x27;&#x27;</span> :: <span class="number">1</span>) <span class="operator">-</span><span class="operator">&gt;</span> notEquals(URL, <span class="string">&#x27;&#x27;</span>) UInt8 : <span class="number">2</span>            │</span><br><span class="line">│       Positions: <span class="number">0</span> <span class="number">2</span>                                                                           │</span><br><span class="line">│         SettingQuotaAndLimits (<span class="keyword">Set</span> limits <span class="keyword">and</span> quota after reading <span class="keyword">from</span> storage)                │</span><br><span class="line">│           ReadFromMergeTree                                                                    │</span><br><span class="line">│           ReadType: <span class="keyword">Default</span>                                                                    │</span><br><span class="line">│           Parts: <span class="number">1</span>                                                                             │</span><br><span class="line">│           Granules: <span class="number">122071</span>                                                                     │</span><br><span class="line">└────────────────────────────────────────────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line"><span class="number">27</span> <span class="keyword">rows</span> <span class="keyword">in</span> set. Elapsed: <span class="number">0.002</span> sec.</span><br></pre></td></tr></table></figure>
+<p>可以看到，在该查询中，包含三个 ActionsDAG，最下面的 ActionsDAG 是进行过滤时使用到的，中间的 ActionsDAG 计算 <code>length(URL)</code>，最后的 ActionsDAG 在聚合执行完之后执行，计算 <code>avg(length(URL)) + 1</code>。</p>
+<p>在输出中能够清晰的看出 ActionsDAG 中每一个列在 Block 中的位置， Action 之间的依赖关系，以及每一个 ActionsDAG 执行完成后返回的列等信息。以最下面的 ActionsDAG 为例，其包含三个节点：第一个节点为 <code>INPUT</code>的 URL 列，位于 Block 中索引为 0 的位置；第二个节点为 <code>COLUMN Const</code> ，值为空字符串，位于 Block 中索引为 1 的位置；第三个节点为 <code>FUNCION notEqual</code>，该节点依赖于前面两个节点，前面两个节点是该节点的输入，其输出为 <code>UInt8</code> 类型，位于 Block 中索引为 2 的位置。最后，该 ActionsDAG 会返回 Block 中索引为 0 和 2 的列，即 <code>Positions: 0 2</code>。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本文详细介绍了 ClickHouse 向量化执行引擎的实现。大量使用 SIMD 内置函数，以及高效的 Pipeline 执行引擎设计与实现，是 ClickHouse 拥有卓越查询性能的核心因素。</p>
+
+      
+    </div>
+
+    
+      
+
+    
+
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Pipeline/" rel="tag">Pipeline</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Vectorization/" rel="tag">Vectorization</a></li></ul>
+
+
+    </footer>
+  </div>
+  
+    
+<ul id="article-nav" class="nav nav-pills nav-justified">
+  
+  <li role="presentation">
+    <a href="/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/" id="article-nav-older" class="article-nav-link-wrap">
+      <i class="fa fa-chevron-left pull-left"></i>
+      <span class="article-nav-link-title">How to Implement User-defined-functions in ClickHouse</span>
+    </a>
+  </li>
+  
+  
+  <li role="presentation">
+    <a href="/2023/02/03/2022-Summarize/" id="article-nav-newer" class="article-nav-link-wrap">
+      <span class="article-nav-link-title">2022-Summarize</span>
+      <i class="fa fa-chevron-right pull-right"></i>
+    </a>
+  </li>
+  
+</ul>
+
+
+  
+</article>
+
+
+
+
+        </div>
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          
+  
+  <div class="sidebar-module">
+    <h4>Recents</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/2023/02/03/2022-Summarize/">2022-Summarize</a>
+        </li>
+      
+        <li>
+          <a href="/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/">How Vectorization Execution Implemented in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/">How to Implement User-defined-functions in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/06/07/Large-Scale-Graph-Analysis-Systems/">Large Scale Graph Analysis Systems</a>
+        </li>
+      
+        <li>
+          <a href="/2018/07/08/Introduction-to-LLVM-Pass-and-APA/">Introduction to LLVM Pass and APA</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>Archives</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/02/">February 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2022/09/">September 2022</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/12/">December 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/06/">June 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2018/07/">July 2018</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Categories</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Graph-Systems/">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/LLVM/">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Summarize/">Summarize</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Tags</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/LLVM/" rel="tag">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pipeline/" rel="tag">Pipeline</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Summarize/" rel="tag">Summarize</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Udf/" rel="tag">Udf</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Vectorization/" rel="tag">Vectorization</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+
+        </div>
+    </div>
+  </div>
+  <footer class="blog-footer">
+  <div class="container">
+    <div id="footer-info" class="inner">
+      &copy; 2018  ~ 2023  flynn<br>
+    </div>
+  </div>
+</footer>
+
+  
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js" integrity="sha384-8gBf6Y4YYq7Jx97PIqmTwLPin4hxIzQw5aDmUg/DDhul9fFpbbLcLh3nTIIDJKhx" crossorigin="anonymous"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+</body>
+</html>
