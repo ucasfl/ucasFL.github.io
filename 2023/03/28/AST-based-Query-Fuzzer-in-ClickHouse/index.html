@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>AST-based Query Fuzzer in ClickHouse | Blog Website</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="在软件开发中，测试是保证系统&#x2F;程序能够正确、可靠、稳定运行的重要途径，并且是永无止境的。 对于数据库来说，其需要对输入的 SQL 查询语言进行解释执行，从而对持久化存储的数据进行计算和处理，并且执行过程通常是分布式的。对于上述每一项功能的正确性测试，都非常困难，而当三者结合到一块时，情况则更加复杂。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AST-based Query Fuzzer in ClickHouse">
+<meta property="og:url" content="https://ucasfl.github.io/2023/03/28/AST-based-Query-Fuzzer-in-ClickHouse/index.html">
+<meta property="og:site_name" content="Blog Website">
+<meta property="og:description" content="在软件开发中，测试是保证系统&#x2F;程序能够正确、可靠、稳定运行的重要途径，并且是永无止境的。 对于数据库来说，其需要对输入的 SQL 查询语言进行解释执行，从而对持久化存储的数据进行计算和处理，并且执行过程通常是分布式的。对于上述每一项功能的正确性测试，都非常困难，而当三者结合到一块时，情况则更加复杂。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/it-works.png">
+<meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/fuzz-issue.png">
+<meta property="article:published_time" content="2023-03-28T15:10:40.000Z">
+<meta property="article:modified_time" content="2023-04-01T17:19:47.321Z">
+<meta property="article:author" content="flynn">
+<meta property="article:tag" content="Fuzzer">
+<meta property="article:tag" content="ClickHouse">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ucasfl.github.io/photos/fuzzer/it-works.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Blog Website" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/photos/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" integrity="sha384-XdYbMnZ/QjLh6iI4ogqCTaIjrFk87ip+ekIjefZch0Y+PvJ8CDYtEs1ipDmPorQ+" crossorigin="anonymous">
+
+  
+<link rel="stylesheet" href="/css/styles.css">
+
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-inverse">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-menu-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="main-menu-navbar">
+      <ul class="nav navbar-nav">
+        
+          <li><a class=""
+                 href="/index.html">Home</a></li>
+        
+          <li><a class=""
+                 href="/archives/">Archives</a></li>
+        
+          <li><a class=""
+                 href="/about/">About</a></li>
+        
+          <li><a class=""
+                 target="_blank" rel="noopener" href="https://github.com/ucasfl">GitHub</a></li>
+        
+      </ul>
+
+      <!--
+      <ul class="nav navbar-nav navbar-right">
+        
+          <li><a href="/atom.xml" title="RSS Feed"><i class="fa fa-rss"></i></a></li>
+        
+      </ul>
+      -->
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+  <div class="container">
+    <div class="blog-header">
+  <h1 class="blog-title">Blog Website</h1>
+  
+</div>
+
+    <div class="row">
+        <div class="col-sm-8 blog-main">
+          <article id="post-AST-based-Query-Fuzzer-in-ClickHouse" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+    
+  
+    <h1 class="article-title" itemprop="name">
+      AST-based Query Fuzzer in ClickHouse
+    </h1>
+  
+
+
+  </header>
+
+  <div class="article-meta">
+    <div class="article-datetime">
+  <a href="/2023/03/28/AST-based-Query-Fuzzer-in-ClickHouse/" class="article-date"><time datetime="2023-03-28T15:10:40.000Z" itemprop="datePublished">2023-03-28</time></a>
+</div>
+
+    
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ClickHouse/">ClickHouse</a>
+  </div>
+
+
+  </div>
+  <div class="article-inner">
+
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>在软件开发中，<strong>测试</strong>是保证系统/程序能够正确、可靠、稳定运行的重要途径，并且是永无止境的。</p>
+<p>对于数据库来说，其需要对输入的 SQL 查询语言进行解释执行，从而对持久化存储的数据进行计算和处理，并且执行过程通常是分布式的。对于上述每一项功能的正确性测试，都非常困难，而当三者结合到一块时，情况则更加复杂。</p>
+<span id="more"></span>
+
+<h1 id="ClickHouse-如何进行测试"><a href="#ClickHouse-如何进行测试" class="headerlink" title="ClickHouse 如何进行测试"></a>ClickHouse 如何进行测试</h1><p>在 ClickHouse 的 ci 中，有许多种不同类型的测试，简要介绍其中包含的几种主要测试：</p>
+<ul>
+<li><strong>Unit tests</strong>：单元测试在 ClickHouse 中实际上并不常见，也不常用，只有在实现内部的一些核心模块时，会编写一些单元测试，大多数时候来说，都不需要写单元测试。    </li>
+<li><strong>回归测试</strong>：回归测试，在 ci 中叫做 functional test，这一类测试是 ClickHouse 最主要的测试，也是日常在开发新特性，或者进行 BugFix 时通常需要编写的测试。这一类测试的编写非常简单，只需要编写 SQL 脚本来描述测试 case，然后记录脚本对应的 <code>reference</code> 输出，在进行测试时，会运行脚本检查输出是否和 <code>reference</code> 一致，这种测试方法在许多数据库中都有使用到。目前，在 ClickHouse 中，这一测试对应的 SQL 行数已经超过十万行，达到了很高的代码覆盖率。</li>
+<li><strong>Stress tests</strong>：压测，如名字所示。</li>
+<li><strong>Integration tests</strong>：集成测试，当需要测试的功能依赖于一些外部组件时，如 <code>Kafka Engine</code> 或者 S3/HDFS 相关功能，则需要编写 Integration test 来测试正确性。</li>
+<li><strong>Performance tests</strong>：性能测试，如名字所示。在快速迭代开发过程中，需要持续关注性能变化，防止性能回退。在提交性能优化相关的 PR 时，需要通过性能测试来验证优化的有效性。</li>
+<li><strong>AST fuzzer</strong>：模糊测试，在下文中会进行介绍。</li>
+</ul>
+<h1 id="Fuzzing-Test"><a href="#Fuzzing-Test" class="headerlink" title="Fuzzing Test"></a>Fuzzing Test</h1><p>Fuzzing test，模糊测试，是一种自动化的软件测试方法，其通过生成一些未确定的、随机的数据，注入到程序中，进而监测程序的运行状态，比如是否发生 <strong>crash</strong>，或者触发 <strong>断言(assertion)<strong>失败、</strong>内存泄漏</strong>或 <strong>data race</strong> 等行为，从而找出程序中存在的 bug。</p>
+<p>为什么需要 fuzzing test？在上文中提到，在开发一个新的特性时，需要编写对应的回归测试，这一类型的测试通常只是通过一些简单的示例来描述了该特性支持什么，不支持什么，即 <strong>example-based tests</strong>。然而，在实际情况中，bug 经常发生在的是一些开发过程中没有考虑到的 <strong>corner case</strong>，或者是由于几个不同的特性结合产生的，我们无法枚举出所有可能的情况，即<strong>输入空间</strong>是巨大的。而在 fuzzing test 中，通过将一些按照特定语法规则生成的”随机数据(SQL)”注入数据库中，就能够自动帮助我们找到许多有趣的 <strong>corner cases</strong>。</p>
+<h1 id="AST-based-Query-Fuzzer"><a href="#AST-based-Query-Fuzzer" class="headerlink" title="AST-based Query Fuzzer"></a>AST-based Query Fuzzer</h1><p>当前，在业内已有一些工具能够按照 SQL 语法来生成有效的查询，如 <a target="_blank" rel="noopener" href="https://github.com/anse1/sqlsmith">sqlsmith</a>，已经在许多数据库中被运用。然而，ClickHouse 实现了一个基于递归下降的纯手写 <code>Parser</code>，不是标准的 SQL 语法，并且包含了大量丰富的<a href="https://ucasfl.github.io/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/">函数</a>，因此很难直接将此类工具运用到 ClickHouse 中。</p>
+<p>在 ClickHouse 中，包含了大量人工写的回归测试 SQL，当前已经超过 10 万行，是否能够基于这些 SQL 来进行 fuzzing 呢？对于这些回归测试中的任意一个 SQL，当其被解析之后，我们很容易在进行执行前，对其 AST（抽象语法树）表示进行一些随机的变换，从而生成一个新的查询，AST-based Query Fuzzer 正是基于这种方式实现的。</p>
+<p>对 AST 的变换非常简单。例如，对于一个 String，随机将其置为空，或者重复一遍，或者随机在某个位置插入一个 <code>\0</code>；对于整数或浮点数，随机变换为 <code>0</code>、<code>INT_MAX</code> 或 <code>NaN</code> 之类的 <strong>bad value</strong>，这类 <strong>bad values</strong> 通常是最容易导致出现 bug 的。</p>
+<p>对于 <code>SELECT</code> 查询，随机添加或者删除一些 <code>SELECT</code> 列表、<code>ORDER BY</code> 列表，随机添加或删除过滤条件等，同时递归对 AST 的 <code>children</code> 节点进行 fuzzing，对于函数的参数，也会进行 fuzzing；对于 <code>CREATE</code> 建表语句，会对 <code>COLUMN</code> 声明进行 fuzzing，例如将数据类型从非 <code>Nullable</code> 变成 <code>Nullable</code> 的，非低基数类型变成低基数类型，从而创建不同的表，用于后续查询的 fuzzing。</p>
+<p>在运行 ci 的过程中，所有 tests 中的所有查询会以任意的顺序运行，因此在 fuzzing 的过程中能够与前面看到的别的查询中出现的参数结合到一块，从而能够进一步对不同特性的随机结合进行测试。此外，对于 PR 中的新特性，ci 在 fuzzing 的过程中会对新添加的测试产生更多的输入，因此即使手工编写的回归测试不够完备，也有很大可能在 fuzzing 过程中找到回归测试中没有覆盖到的 corener case。</p>
+<p><strong>如何在 fuzzing 过程中检查出现的错误和 bug？</strong>主要通过一下几种方式：</p>
+<ul>
+<li>当程序因为内存问题导致 crash 退出，则说明出现了相应的 bug，这是最直接的方式；</li>
+<li>ci 会分别在 <code>Debug</code> 和 <code>Release</code> 模型下运行。在 <code>Debug</code> 模式下，通过 <code>assert</code> 来进行判断；而在 <code>Release</code> 模式下，如果抛出了 ErrorCode 为 <code>LOGICAL_ERROR</code> 的异常，表示程序内部出现了错误，在 ClickHouse 中，将这类异常和其他比如由于用户输出了错误的 SQL 导致的异常区分开来，出现 <code>LOGICAL_ERROR</code> 的异常则表明程序中存在 bug；</li>
+<li>此外，ClickHouse 也使用了多种 clang 的 sanitizer 在运行时对程序进行检查，包括 <a target="_blank" rel="noopener" href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a>、<a target="_blank" rel="noopener" href="https://clang.llvm.org/docs/MemorySanitizer.html">MemorySanitizer</a>、<a target="_blank" rel="noopener" href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html">UndefinedBehaviorSanitizer</a> 和 <a target="_blank" rel="noopener" href="https://clang.llvm.org/docs/ThreadSanitizer.html">ThreadSanitizer</a>。这些 sanitizer 和 fuzzer 结合到一块，发现了非常多的 bug。</li>
+</ul>
+<p>AST Fuzzer 的实现位于 ClickHouse 代码库 <code>src/Client/QueryFuzzer.h</code> 和 <code>src/Client/QueryFuzzer.cpp</code>， 总共仅有 1000 多行代码，可以说是“短小精悍”。自从 2021 年推出 AST Fuzzer 以来，已经发现并修复了<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/issues?q=is:issue+label:fuzz+">大量的 bug</a>。</p>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>如果想通过 clickhouse-client 对 SQL 进行 fuzzing，只需要在运行时添加参数 <code>query-fuzzer-runs</code>，该参数表示对输入的 SQL 进行多少次 fuzzing，例如，以如下参数运行时，</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clickhouse-client --query-fuzzer-runs = 300</span><br></pre></td></tr></table></figure>
+<p>对于输入的每一个SQL，会进行 300 次 fuzzing 并执行。</p>
+<p>我们以 ClickHouse <a target="_blank" rel="noopener" href="https://clickhouse.com/docs/en/getting-started/example-datasets/star-schema">Star Schema Benchmark</a> 中的 Q1.1 为例进行 fuzzing，看看会生成什么样的 SQL，原始 SQL 如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="built_in">sum</span>(LO_EXTENDEDPRICE <span class="operator">*</span> LO_DISCOUNT) <span class="keyword">AS</span> revenue</span><br><span class="line"><span class="keyword">FROM</span> lineorder_flat</span><br><span class="line"><span class="keyword">WHERE</span> toYear(LO_ORDERDATE) <span class="operator">=</span> <span class="number">1993</span> <span class="keyword">AND</span> LO_DISCOUNT <span class="keyword">BETWEEN</span> <span class="number">1</span> <span class="keyword">AND</span> <span class="number">3</span> <span class="keyword">AND</span> LO_QUANTITY <span class="operator">&lt;</span> <span class="number">25</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在进行 fuzzing 后，SQL 变成了如下形式：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="built_in">sum</span>(LO_EXTENDEDPRICE <span class="operator">*</span> LO_DISCOUNT) <span class="keyword">AS</span> revenue</span><br><span class="line"><span class="keyword">FROM</span> lineorder_flat</span><br><span class="line">PREWHERE (LO_DISCOUNT <span class="operator">&gt;=</span> <span class="number">2147483647</span>) <span class="keyword">AND</span> <span class="keyword">NULL</span> <span class="keyword">AND</span> (LO_DISCOUNT <span class="operator">&lt;=</span> <span class="number">1.1754943508222875e-38</span>)</span><br><span class="line"><span class="keyword">WHERE</span> LO_QUANTITY <span class="operator">&lt;</span> <span class="number">7</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span></span><br><span class="line">    <span class="keyword">GROUPING</span> SETS (</span><br><span class="line">        (toYear(LO_ORDERDATE) <span class="operator">=</span> <span class="string">&#x27;9223372036854775806&#x27;</span>),</span><br><span class="line">        ((LO_DISCOUNT <span class="operator">&gt;=</span> <span class="keyword">NULL</span>) <span class="keyword">AND</span> (LO_QUANTITY <span class="operator">&lt;</span> <span class="number">10</span>)),</span><br><span class="line">        ((LO_DISCOUNT <span class="operator">&gt;=</span> <span class="number">7</span>) <span class="keyword">AND</span> (toYear(LO_ORDERDATE) <span class="operator">=</span> <span class="number">3.4028234663852886e38</span>) <span class="keyword">AND</span> (LO_QUANTITY <span class="operator">&lt;</span> <span class="number">0</span>)))</span><br></pre></td></tr></table></figure>
+<p>可以看到，在 fuzzing 之后，随机生成了更加复杂的 SQL。事实上，上文提到，fuzzing 过程中会不断收集前面已经运行过的 SQL 的参数，所以，在对后续的 SQL 进行 fuzzing过程中，能够使用到前面运行过的 SQL 的参数，因此能够将不同 SQL、不同特性结合到一块进行 fuzzing。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>前一阵子，在修复一个 <a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/47473"><code>EXPLAIN PIPELINE</code> 相关的 bug</a> 时，Alexey 让我去顺便检查一下目前 AST Fuzzer 是否会对 EXPLAIN 查询进行 fuzzing，如果没有，需要添加一下，否则后续类似的 bug 还会不断出现。之后，我去查看 QueryFuzzer 的代码，发现确实没有针对 EXPLAIN 查询的 fuzzing，于是分别添加了<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/47803">对 EXPLAIN 查询的fuzzing</a> 和<a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/47852">随机将 SELECT 查询 fuzzing 成 EXPLAIN 查询</a>。</p>
+<p>在这两个 PRs 合并进 master 分支之后，Fuzzer 开始工作了：<br><img src="/photos/fuzzer/it-works.png"></p>
+<p>过去几天里，得益于新加入的功能，已经发现了多个相关的 bug，<br>其中一些与新的 <a target="_blank" rel="noopener" href="https://github.com/ClickHouse/ClickHouse/pull/31796">Analyzer</a>相关：<br><img src="/photos/fuzzer/fuzz-issue.png"></p>
+<p>这一方面证明了 Fuzzer 的有效性，同时也验证了文章开头的话：<strong>测试是一项永无止境的工作。</strong></p>
+
+      
+    </div>
+
+    
+      
+
+    
+
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Fuzzer/" rel="tag">Fuzzer</a></li></ul>
+
+
+    </footer>
+  </div>
+  
+    
+<ul id="article-nav" class="nav nav-pills nav-justified">
+  
+  <li role="presentation">
+    <a href="/2023/02/03/2022-Summarize/" id="article-nav-older" class="article-nav-link-wrap">
+      <i class="fa fa-chevron-left pull-left"></i>
+      <span class="article-nav-link-title">2022-Summarize</span>
+    </a>
+  </li>
+  
+  
+</ul>
+
+
+  
+</article>
+
+
+
+
+        </div>
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          
+  
+  <div class="sidebar-module">
+    <h4>Recents</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/2023/03/28/AST-based-Query-Fuzzer-in-ClickHouse/">AST-based Query Fuzzer in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2023/02/03/2022-Summarize/">2022-Summarize</a>
+        </li>
+      
+        <li>
+          <a href="/2022/09/21/How-Vectorization-Execution-Implemented-in-ClickHouse/">How Vectorization Execution Implemented in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/">How to Implement User-defined-functions in ClickHouse</a>
+        </li>
+      
+        <li>
+          <a href="/2020/06/07/Large-Scale-Graph-Analysis-Systems/">Large Scale Graph Analysis Systems</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>Archives</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/03/">March 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2023/02/">February 2023</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2022/09/">September 2022</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/12/">December 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2020/06/">June 2020</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2018/07/">July 2018</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Categories</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Graph-Systems/">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/LLVM/">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Summarize/">Summarize</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>Tags</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Fuzzer/" rel="tag">Fuzzer</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Graph-Systems/" rel="tag">Graph Systems</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/LLVM/" rel="tag">LLVM</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pipeline/" rel="tag">Pipeline</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Summarize/" rel="tag">Summarize</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Udf/" rel="tag">Udf</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Vectorization/" rel="tag">Vectorization</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+
+        </div>
+    </div>
+  </div>
+  <footer class="blog-footer">
+  <div class="container">
+    <div id="footer-info" class="inner">
+      &copy; 2018  ~ 2023  flynn<br>
+    </div>
+  </div>
+</footer>
+
+  
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js" integrity="sha384-8gBf6Y4YYq7Jx97PIqmTwLPin4hxIzQw5aDmUg/DDhul9fFpbbLcLh3nTIIDJKhx" crossorigin="anonymous"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+</body>
+</html>
