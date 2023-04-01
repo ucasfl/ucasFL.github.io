@@ -15,7 +15,7 @@
 <meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/it-works.png">
 <meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/fuzz-issue.png">
 <meta property="article:published_time" content="2023-03-28T15:10:40.000Z">
-<meta property="article:modified_time" content="2023-04-01T17:41:14.126Z">
+<meta property="article:modified_time" content="2023-04-01T17:44:43.523Z">
 <meta property="article:author" content="flynn">
 <meta property="article:tag" content="Fuzzer">
 <meta property="article:tag" content="ClickHouse">
@@ -142,7 +142,7 @@
 <p>在 ClickHouse 中，包含了大量人工写的回归测试 SQL，当前已经超过 10 万行，是否能够基于这些 SQL 来进行 fuzzing 呢？对于这些回归测试中的任意一个 SQL，当其被解析之后，我们很容易在进行执行前，对其 AST（抽象语法树）表示进行一些随机的变换，从而生成一个新的查询，AST-based Query Fuzzer 正是基于这种方式实现的。</p>
 <p>对 AST 的变换非常简单。例如，对于一个 String，可以随机将其置为空，或复制一遍，或者随机在某个位置插入一个 <code>\0</code>；对于整数或浮点数，可以随机变换为 <code>0</code>、<code>INT_MAX</code> 或 <code>NaN</code> 之类的 <strong>bad values</strong>，这类 <strong>bad values</strong> 通常是最容易导致出现 bug 的参数。</p>
 <p>对于 <code>SELECT</code> 查询，可以随机添加或者删除一些 <code>SELECT</code> 表达式、<code>ORDER BY</code> 表达式，随机添加或删除过滤条件等，同时递归对 AST 的 <code>children</code> 节点进行 fuzzing，对于函数的参数，也会进行 fuzzing；对于 <code>CREATE</code> 建表语句，会对 <code>COLUMN</code> 声明进行 fuzzing，例如将数据类型从非 <code>Nullable</code> 变成 <code>Nullable</code> 的，非低基数类型变成低基数类型，从而创建不同的表，用于后续查询的 fuzzing。基于上述方式，就能够生成大量随机的、未确定的 SQL。</p>
-<p>在运行 ci 的过程中，所有 tests 中的全部查询会以任意的顺序运行，在 fuzzing 过程中会不断收集前面已经执行的 SQL 的参数，因此在对后续的 SQL 进行 fuzzing 时能够与已经运行过的查询中出现的参数结合到一块，从而能够进一步对不同特性的随机结合进行测试。此外，对于 PR 中的新特性，ci 在 fuzzing 的过程中会对新添加的测试产生更多的输入，因此即使手工编写的回归测试不够完备，也有很大可能在 fuzzing 过程中找到回归测试中没有覆盖到的 corener case。</p>
+<p>在运行 ci 的过程中，所有 tests 中的全部查询会以任意的顺序运行，在 fuzzing 过程中会不断收集前面已经执行完的 SQL 的参数，因此在对后续的 SQL 进行 fuzzing 时能够与已经运行过的查询中出现的参数结合到一块，从而能够进一步对不同特性的随机结合进行测试。此外，对于 PR 中的新特性，ci 在 fuzzing 的过程中会对新添加的测试产生更多的输入，因此即使手工编写的回归测试不够完备，也有很大可能在 fuzzing 过程中找到回归测试中没有覆盖到的 corener case。</p>
 <p><strong>如何在 fuzzing 过程中检查出现的错误和 bug 呢？</strong>主要通过以下几种方式：</p>
 <ul>
 <li>当程序因为内存问题导致 crash 退出，则说明出现了相应的 bug，这是最直接的方式；</li>
