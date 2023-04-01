@@ -15,7 +15,7 @@
 <meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/it-works.png">
 <meta property="og:image" content="https://ucasfl.github.io/photos/fuzzer/fuzz-issue.png">
 <meta property="article:published_time" content="2023-03-28T15:10:40.000Z">
-<meta property="article:modified_time" content="2023-04-01T17:39:32.854Z">
+<meta property="article:modified_time" content="2023-04-01T17:41:14.126Z">
 <meta property="article:author" content="flynn">
 <meta property="article:tag" content="Fuzzer">
 <meta property="article:tag" content="ClickHouse">
@@ -137,7 +137,7 @@
 <li><strong>AST fuzzer</strong>：模糊测试，在下文中会进行介绍。</li>
 </ul>
 <h1 id="Fuzzing-Test"><a href="#Fuzzing-Test" class="headerlink" title="Fuzzing Test"></a>Fuzzing Test</h1><p>Fuzzing test，模糊测试，是一种自动化的软件测试方法，其通过生成一些未确定的、随机的数据，注入到程序中，进而监测程序的运行状态，比如是否发生 <strong>crash</strong>，或者触发 <strong>断言(assertion)<strong>失败、</strong>内存泄漏</strong>或 <strong>data race</strong> 等行为，从而找出程序中存在的 bug。</p>
-<p>为什么需要 fuzzing test？在上文中提到，在开发一个新的特性时，需要编写对应的回归测试，这一类型的测试通常只是通过一些简单的示例来描述了该特性支持什么，不支持什么，即 <strong>example-based tests</strong>。然而，在实际情况中，bug 经常发生在的是一些开发过程中没有考虑到的 <strong>corner case</strong>，或者是由于几个不同的特性结合产生的，我们无法枚举出所有可能的情况，即<strong>输入空间</strong>是巨大的。而在 fuzzing test 中，通过将一些按照特定语法规则生成的”随机数据(SQL)”注入数据库中，就能够自动帮助我们找到许多有趣的 <strong>corner cases</strong>。</p>
+<p>为什么需要 fuzzing test？在上文中提到，在开发一个新的特性时，需要编写对应的回归测试，这一类型的测试通常只是通过一些简单的示例来描述了该特性支持什么，不支持什么，即 <strong>example-based tests</strong>。然而，在实际情况中，bug 经常发生在的是一些开发过程中没有考虑到的 <strong>corner case</strong>，或者是由于几个不同的特性结合产生的，我们无法枚举出所有可能的情况，即<strong>输入空间</strong>是巨大的。而在 fuzzing test 中，通过将一些按照特定语法规则随机生成的查询注入数据库中，就能够自动帮助我们找到许多有趣的 <strong>corner cases</strong>。</p>
 <h1 id="AST-based-Query-Fuzzer"><a href="#AST-based-Query-Fuzzer" class="headerlink" title="AST-based Query Fuzzer"></a>AST-based Query Fuzzer</h1><p>当前，业内已有一些工具能够按照 SQL 语法来生成有效的查询，如 <a target="_blank" rel="noopener" href="https://github.com/anse1/sqlsmith">sqlsmith</a>，已经在许多数据库中被运用。然而，ClickHouse 实现了一个基于递归下降的纯手写 <code>Parser</code>，不是标准的 SQL 语法，并且包含了大量丰富的<a href="https://ucasfl.github.io/2020/12/25/How-to-Implement-User-defined-functions-in-ClickHouse/">函数</a>，因此很难直接将此类工具运用到 ClickHouse 中。</p>
 <p>在 ClickHouse 中，包含了大量人工写的回归测试 SQL，当前已经超过 10 万行，是否能够基于这些 SQL 来进行 fuzzing 呢？对于这些回归测试中的任意一个 SQL，当其被解析之后，我们很容易在进行执行前，对其 AST（抽象语法树）表示进行一些随机的变换，从而生成一个新的查询，AST-based Query Fuzzer 正是基于这种方式实现的。</p>
 <p>对 AST 的变换非常简单。例如，对于一个 String，可以随机将其置为空，或复制一遍，或者随机在某个位置插入一个 <code>\0</code>；对于整数或浮点数，可以随机变换为 <code>0</code>、<code>INT_MAX</code> 或 <code>NaN</code> 之类的 <strong>bad values</strong>，这类 <strong>bad values</strong> 通常是最容易导致出现 bug 的参数。</p>
